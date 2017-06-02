@@ -1,0 +1,10 @@
+version: '2'
+
+services:
+  dev:
+    build: .
+    working_dir: /ddbes/compiled
+    volumes:
+      - .:/ddbes/src
+      - /ddbes/src/node_modules
+    command: devops/start-dev.sh

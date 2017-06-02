@@ -1,0 +1,60 @@
+{
+  "name": "ddbes",
+  "version": "0.0.9",
+  "description": "DynamoDB Event Store",
+  "main": "lib/index.js",
+  "author": "Trym Skaar",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^2.4.1",
+    "aws-sdk": "^2.59.0",
+    "ms": "^2.0.0",
+    "tempus-fugit": "^2.3.1",
+    "uuid": "^3.0.1"
+  },
+  "babel": {
+    "plugins": [
+      "root-import",
+      "transform-object-rest-spread",
+      "transform-export-extensions",
+      "transform-class-properties"
+    ],
+    "presets": [
+      [
+        "env",
+        {
+          "targets": {
+            "node": "current"
+          },
+          "exclude": [
+            "transform-async-to-generator"
+          ]
+        }
+      ]
+    ]
+  },
+  "eslintConfig": {
+    "extends": [
+      "skalar"
+    ],
+    "rules": {
+      "no-magic-numbers": 0,
+      "no-process-env": 0
+    }
+  },
+  "devDependencies": {
+    "babel-cli": "^6.24.1",
+    "babel-plugin-root-import": "^5.1.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-export-extensions": "^6.22.0",
+    "babel-plugin-transform-object-rest-spread": "^6.23.0",
+    "babel-preset-env": "^1.5.1",
+    "blue-tape": "^1.0.0",
+    "eslint": "^3.19.0",
+    "eslint-config-skalar": "^0.0.7",
+    "nodemon": "^1.11.0",
+    "tap-spec": "^4.1.1",
+    "tape": "^4.6.3"
+  },
+  "repository": "https://github.com/skalar/ddbes"
+}
