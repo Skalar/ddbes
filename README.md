@@ -106,6 +106,12 @@ aggregates/User.js
 import {MultiInstanceAggregate} from 'ddbes'
 
 class User extends MultiInstanceAggregate {
+  // default idProps
+  static idProps = [{
+    name: 'id',
+    defaultValue: () => uuid()
+  }]
+
   static commands = {
     changeName(name) {
       return this.commit({type: 'UserNameChanged', name})
