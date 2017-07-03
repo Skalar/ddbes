@@ -103,11 +103,11 @@ async function doSomething() {
 aggregates/User.js
 
 ```javascript
-import {MultiInstanceAggregate} from 'ddbes'
+import {AggregateWithKey} from 'ddbes'
 
-class User extends MultiInstanceAggregate {
-  // default idProps
-  static idProps = [{
+class User extends AggregateWithKey {
+  // default
+  static keyProperties = [{
     name: 'id',
     defaultValue: () => uuid()
   }]
@@ -121,19 +121,21 @@ class User extends MultiInstanceAggregate {
   static function reducer(state = {}, event, commit) {
     switch (event.type) {
       case 'Created': {
-        return {...state, name: event.name, createdAt: commit.committedAt}
+        const {id, name} = event
+        return {...state, id, name, createdAt: commit.committedAt}
       }
 
       case 'NameChanged': {
-        return {...state, name: event.name, updatedAt: commit.committedAt}
+        const {name} = event
+        return {...state, name, updatedAt: commit.committedAt}
       }
 
       default: return state
     }
   }
 
-  create({name}) {
-    return this.commit({type: 'Created', name})
+  create({id, name}) {
+    return this.commit({type: 'Created', id, name})
   }
 }
 ```
@@ -170,7 +172,7 @@ const projector = new Projector({
     events,
     // committedAt,
   }) {
-    const [, userId] = aggregateId.split(':')
+    const [, keyString] = aggregateId.split(':')
 
     for (const event of events) {
       switch (type) {
@@ -180,7 +182,7 @@ const projector = new Projector({
           await elasticsearch.index({
             index: 'myindex',
             type: 'User',
-            id: userId,
+            id: keyString,
             body: {name, createdAt},
           })
 
@@ -192,7 +194,7 @@ const projector = new Projector({
           await elasticsearch.update({
             index: 'myindex',
             type: 'User',
-            id: userId,
+            id: keyString,
             body: {
               doc: {name, updatedAt}
             }
