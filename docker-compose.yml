@@ -1,5 +1,8 @@
 version: '2'
 
+volumes:
+  compiled:
+
 services:
   dev:
     build: .
@@ -7,4 +10,5 @@ services:
     volumes:
       - .:/ddbes/src
       - /ddbes/src/node_modules
+      - compiled:/ddbes/compiled
     command: devops/start-dev.sh
