@@ -212,24 +212,3 @@ projector.start({watch: true})
 // ... something happens ...
 projector.stop()
 ```
-
-
-### AggregateStreamer
-
-```javascript
-import {AggregateStreamer} from 'ddbes'
-import {User} from './aggregates'
-
-const streamer = new AggregateStreamer({tableName: 'myapp-commits'})
-
-// on computer A
-const user = await streamer.load(User, 'gudleik')
-console.log(gudleik.state.name) // Gudleik
-
-// on computer B
-const user = await streamer.load(User, 'gudleik')
-await user.changeName('Gudleika')
-
-// some milliseconds later on computer A
-console.log(gudleik.state.name) // Gudleika
-```
