@@ -158,6 +158,63 @@ async function doSomething() {
 }
 ```
 
+### Command validation
+aggregates/commands.js
+```javascript
+import Joi from 'joi'
+import User from 'aggregates/User'
+
+async function doSomething({foo, bar}) {
+  return this.commit({
+    type: 'SomethingDone',
+    foo,
+    bar
+  })
+}
+
+doSomething.validation = args => {
+  const {error, value} = Joi.validate(
+    args,
+    Joi.object().required().keys({
+      foo: Joi.string().required(),
+      bar: Joi.number().required()
+    })
+  )
+
+  if (error) throw error
+
+  return value
+}
+
+async function doSomethingElse({userId, reason}) {
+  return this.commit({
+    type: 'SomethingElseDone',
+    userId,
+    reason
+  })
+}
+
+// Validation supports async validations
+doSomethingElse.validation = async args => {
+  const {error, value} = Joi.validate(
+    args,
+    Joi.object().required().keys({
+      userId: Joi.string().required(),
+      reason: Joi.string().required(9)
+    })
+  )
+
+  if (error) throw error
+
+  const user = await User.load(args.userId)
+  if (!user) throw new Error('User not found')
+  
+  return value
+}
+
+export default {doSomething, doSomethingElse}
+```
+
 ### Projector
 
 projector.js
