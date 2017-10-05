@@ -186,19 +186,15 @@ async function doSomething({foo, bar}) {
   })
 }
 
-doSomething.validation = args => {
-  const {error, value} = Joi.validate(
-    args,
+doSomething.validation = args => Joi.validate(
+  args,
+  Joi.array().length(1).label('arguments').items(
     Joi.object().required().keys({
       foo: Joi.string().required(),
       bar: Joi.number().required()
     })
   )
-
-  if (error) throw error
-
-  return value
-}
+)
 
 async function doSomethingElse({userId, reason}) {
   return this.commit({
@@ -210,20 +206,20 @@ async function doSomethingElse({userId, reason}) {
 
 // Validation supports async validations
 doSomethingElse.validation = async args => {
-  const {error, value} = Joi.validate(
+  const argsWithDefaults = await Joi.validate(
     args,
-    Joi.object().required().keys({
-      userId: Joi.string().required(),
-      reason: Joi.string().required(9)
-    })
+    Joi.array().length(1).label('arguments').items(
+      Joi.object().required().keys({
+        userId: Joi.string().required(),
+        reason: Joi.string().required(9)
+      })
+    )
   )
-
-  if (error) throw error
 
   const user = await User.load(args.userId)
   if (!user) throw new Error('User not found')
   
-  return value
+  return argsWithDefaults
 }
 
 export default {doSomething, doSomethingElse}
