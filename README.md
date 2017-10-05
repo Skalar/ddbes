@@ -32,15 +32,29 @@ Configuration parameters:
 ## Setup
 
 ```javascript
-import {createTable, deleteTable} from 'ddbes'
+import {createTable, deleteTable, setupAutoScaling, removeAutoScaling} from 'ddbes'
 
 const tableName = 'myapp-commits'
 
 async function setup() {
-  await createTable({name: tableName})
+  await createTable({
+    tableName,
+    tableReadCapacity: 50,
+    tableWriteCapacity: 50,
+  })
+
+  await setupAutoScaling({
+    tableName,
+    tableReadMinCapacity: 10,
+    tableReadMaxCapacity: 100,
+    tableWriteMinCapacity: 10,
+    tableWriteMaxCapacity: 100,
+    utilizationTargetInPercent: 60,
+  })
 }
 
 async function teardown() {
+  await removeAutoScaling({name: tableName)
   await deleteTable({name: tableName})
 }
 
