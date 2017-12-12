@@ -1,6 +1,6 @@
 {
   "name": "ddbes",
-  "version": "0.16.3",
+  "version": "0.17.0",
   "description": "DynamoDB Event Store",
   "main": "lib/index.js",
   "author": "Trym Skaar",
