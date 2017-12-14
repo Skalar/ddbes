@@ -12,7 +12,9 @@ You should probably not be using this unless you are familiar with event sourcin
 * [Configuration](#configuration)
 * [Example usage](#example-usage)
 * [TODO: API docs](#api-docs)
-  ## Installation
+* [Development](#development)
+
+## Installation
 
 ```shell
 yarn add ddbes
@@ -182,10 +184,12 @@ import {Aggregate} from 'ddbes'
 import * as commands from './commands'
 
 class MyAggregate extends Aggregate {
-  ...
+  // ...
 }
 
-Object.assign(MyAggregate, commands)
+Object.assign(MyAggregate.prototype, commands)
+
+export default MyAggregate
 ```
 
 ### Command validation and retrying on version conflicts
@@ -273,3 +277,15 @@ projector.start({watch: true})
 // ... something happens ...
 projector.stop()
 ```
+
+## Development
+
+### Running development environment
+
+```shell
+docker-compose up
+```
+
+This should bring up a local dynamodb and s3, as well as running tests and linting every time the code changes.
+
+Built code is available in dist/.
