@@ -1,0 +1,8 @@
+#!/bin/ash
+
+babel \
+  --copy-files \
+  --quiet \
+  --ignore node_modules,dist,docker-compose.yml,Dockerfile \
+  --out-dir dist \
+  .

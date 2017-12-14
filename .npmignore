@@ -1,4 +1,7 @@
+.gitignore
+.editorconfig
+.dockerignore
 docker-compose.yml
 Dockerfile
-integration-tests/
-devops/
+test/
+scripts/

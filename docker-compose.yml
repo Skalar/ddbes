@@ -1,14 +1,27 @@
 version: '2'
 
-volumes:
-  compiled:
-
 services:
   dev:
+    tty: true
     build: .
-    working_dir: /ddbes/compiled
+    working_dir: /ddbes
     volumes:
-      - .:/ddbes/src
-      - /ddbes/src/node_modules
-      - compiled:/ddbes/compiled
-    command: devops/start-dev.sh
+      - .:/ddbes
+      - /ddbes/node_modules
+
+  # For running integration tests locally without an AWS account
+
+  dynamodb:
+    image: dwmkerr/dynamodb
+    ports:
+      - '8000:8000'
+    command: -sharedDb -inMemory
+    volumes:
+      - /data
+
+  s3:
+    image: skalar/fakes3
+    command: s3rver --hostname 0.0.0.0 --port 5000 --directory /tmp/s3 --cors --silent
+    ports:
+      - '5000:5000'
+  
