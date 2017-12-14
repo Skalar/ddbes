@@ -72,16 +72,6 @@ async function teardown() {
 
 ```javascript
 class ApplicationSettings extends Aggregate {
-  static commands = {
-    enableDebug() {
-      return this.commit({type: 'DebugModeEnabled'})
-    },
-
-    disableDebug() {
-      return this.commit({type: 'DebugModeDisabled'})
-    }
-  }
-
   static function reducer(state = {}, event, commit) {
     switch (event.type) {
       case 'DebugModeEnabled': {
@@ -94,6 +84,14 @@ class ApplicationSettings extends Aggregate {
 
       default: return state
     }
+  }
+
+  enableDebug() {
+    return this.commit({type: 'DebugModeEnabled'})
+  },
+
+  disableDebug() {
+    return this.commit({type: 'DebugModeDisabled'})
   }
 }
 
@@ -134,7 +132,6 @@ class User extends AggregateWithKey {
     value: id => id || uuid()
   }]
 
-  static commands = {
     changeName(name) {
       return this.commit({type: 'UserNameChanged', name})
     },
@@ -176,6 +173,19 @@ async function testing() {
 
   const gudleikAtVersion1 =
 }
+```
+
+### Attaching externally defined commands to aggregate class
+
+```javascript
+import {Aggregate} from 'ddbes'
+import * as commands from './commands'
+
+class MyAggregate extends Aggregate {
+  ...
+}
+
+Object.assign(MyAggregate, commands)
 ```
 
 ### Command validation and retrying on version conflicts
