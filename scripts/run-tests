@@ -1,5 +1,7 @@
 #!/bin/ash
 
+set -e
+
 type=${1:-unit}
 config=${CONFIG:-local}
 
