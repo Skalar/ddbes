@@ -47,7 +47,7 @@ Configuration parameters:
 ```javascript
 import ddbes from 'ddbes'
 
-ddbes.config.update({tableName: 'myapp-commits', snapshots: true})
+ddbes.config.update({tableName: 'myapp-commits'})
 
 async function setup() {
   await ddbes.dynamodb.createTable({
@@ -172,8 +172,6 @@ async function testing() {
   await gudleik.hydrate()
 
   gudleik.state.name // Gudleik
-
-  const gudleikAtVersion1 =
 }
 ```
 
