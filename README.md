@@ -203,20 +203,21 @@ async function addItem(name) {
   await this.commit({type: 'ItemAdded', name})
 }
 
+const validation = (...args) =>
+  Joi.validate(
+    args,
+    Joi.array()
+      .length(1)
+      .label('arguments')
+      .items(
+        Joi.string()
+          .label('name')
+          .required()
+      )
+  )
+
 export default aggregateCommand(myCommand, {
-  // the array of args returned from the validation function is applied to the command
-  validation: (...args) =>
-    Joi.validate(
-      args,
-      Joi.array()
-        .length(1)
-        .label('arguments')
-        .items(
-          Joi.string()
-            .label('name')
-            .required()
-        )
-    ),
+  validation, // the array of args returned from the validation function is applied to the command
   retry: true, // Reruns on the command on version conflicts
 })
 ```
