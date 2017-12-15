@@ -1,8 +1,7 @@
-import AWS from 'aws-sdk'
-import {config} from '../../lib'
+import config from '~/lib/config'
 
 async function clearCommits({tableName = config.tableName} = {}) {
-  const ddb = new AWS.DynamoDB()
+  const ddb = new config.configuredAWS.DynamoDB()
   let queryResult
 
   while (!queryResult || queryResult.LastEvaluatedKey) {
