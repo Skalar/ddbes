@@ -125,9 +125,9 @@ async function testing() {
 aggregates/User.js
 
 ```javascript
-import {AggregateWithKey} from 'ddbes'
+import {Aggregate} from 'ddbes'
 
-class User extends AggregateWithKey {
+class User extends Aggregate {
   // default
   static keySchema = [{
     name: 'id',
