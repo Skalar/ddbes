@@ -8,7 +8,10 @@ services:
     volumes:
       - .:/ddbes
       - /ddbes/node_modules
-
+    environment:
+      TABLE_NAME: ${USER}-ddbes-tests
+      BUCKET_NAME: ${USER}-ddbes-tests
+      
   # For running integration tests locally without an AWS account
 
   dynamodb:

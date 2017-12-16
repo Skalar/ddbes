@@ -3,7 +3,7 @@
 set -e
 
 type=${1:-unit}
-config=${CONFIG:-local}
+config=${TEST_CONFIG:-local}
 
 if [ "$type" = "unit" ] || [ "$type" = "all" ]; then
   NODE_ENV=test tape '**/*.test.js' | tap-spec

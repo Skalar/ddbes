@@ -11,7 +11,7 @@ async function setup() {
 
   const s3 = new AWS.S3()
   try {
-    await s3.createBucket({Bucket: 'ddbes-tests'}).promise()
+    await s3.createBucket({Bucket: ddbes.config.snapshotsBucket}).promise()
   } catch (error) {
     if (
       !['BucketAlreadyExists', 'BucketAlreadyOwnedByYou'].includes(error.code)

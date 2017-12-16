@@ -6,9 +6,9 @@ AWS.config.update({
 })
 
 Object.assign(ddbes.config, {
-  tableName: '${process.env.USER}-ddbes-tests',
+  tableName: process.env.TABLE_NAME || 'ddbes-tests',
   snapshots: true,
-  snapshotsBucket: `${process.env.USER}-ddbes-tests`,
+  snapshotsBucket: process.env.BUCKET_NAME,
   snapshotsPrefix: 'snapshots/',
   AWS,
 })
