@@ -3,13 +3,12 @@ import {pick} from 'lodash'
 
 async function assertAggregateCommits(
   t,
-  aggregateId,
-  commits,
+  {aggregateType, aggregateKey = '@', commits},
   description = 'the aggregate has the expected commits'
 ) {
   let storeCommits = []
 
-  await getAggregateCommits({aggregateId}, newCommits => {
+  await getAggregateCommits({aggregateType, aggregateKey}, newCommits => {
     storeCommits = [...storeCommits, ...newCommits]
   })
 

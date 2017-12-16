@@ -8,7 +8,7 @@ cd /ddbes
 
 babel \
   --copy-files \
-  --ignore node_modules,dist \
+  --ignore .git,node_modules,dist \
   --out-dir dist \
   --source-maps inline \
   --watch \

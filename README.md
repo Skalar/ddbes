@@ -129,7 +129,7 @@ import {AggregateWithKey} from 'ddbes'
 
 class User extends AggregateWithKey {
   // default
-  static keyProperties = [{
+  static keySchema = [{
     name: 'id',
     value: id => id || uuid()
   }]

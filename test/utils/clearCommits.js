@@ -24,7 +24,10 @@ async function clearCommits({tableName = config.tableName} = {}) {
           RequestItems: {
             [tableName]: items.slice(i, i + 25).map(item => ({
               DeleteRequest: {
-                Key: {aggregateId: item.aggregateId, version: item.version},
+                Key: {
+                  aggregateType: item.aggregateType,
+                  keyAndVersion: item.keyAndVersion,
+                },
               },
             })),
           },
