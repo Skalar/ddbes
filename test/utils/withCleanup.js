@@ -5,8 +5,7 @@ async function withCleanup(fn) {
   try {
     await fn()
   } finally {
-    await clearCommits()
-    await clearSnapshots()
+    await Promise.all([clearCommits(), clearSnapshots()])
   }
 }
 
