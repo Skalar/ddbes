@@ -16,8 +16,6 @@ services:
 
   dynamodb:
     image: dwmkerr/dynamodb
-    ports:
-      - '8000:8000'
     command: -sharedDb -inMemory
     volumes:
       - /data
@@ -25,6 +23,4 @@ services:
   s3:
     image: skalar/fakes3
     command: s3rver --hostname 0.0.0.0 --port 5000 --directory /tmp/s3 --cors --silent
-    ports:
-      - '5000:5000'
   
