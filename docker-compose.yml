@@ -6,7 +6,7 @@ services:
     build: .
     working_dir: /ddbes
     volumes:
-      - .:/ddbes
+      - .:/ddbes:cached
       - /ddbes/node_modules
     environment:
       TABLE_NAME: ${USER}-ddbes-tests

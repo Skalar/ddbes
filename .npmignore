@@ -1,7 +1,4 @@
-.gitignore
-.editorconfig
-.dockerignore
-docker-compose.yml
-Dockerfile
 test/
 scripts/
+**/*.test.js
+**/*.test.integration.js

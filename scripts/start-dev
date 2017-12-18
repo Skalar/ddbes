@@ -8,11 +8,13 @@ cd /ddbes
 
 babel \
   --copy-files \
-  --ignore .git,node_modules,dist \
+  --ignore node_modules,.dockerignore,docker-compose.yml,Dockerfile,README.md,dist,.DS_Store,.git \
   --out-dir dist \
   --source-maps inline \
   --watch \
   . &
+
+cp .npmignore dist/
 
 nodemon \
   --delay 0.5 \
