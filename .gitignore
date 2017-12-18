@@ -1,2 +1,4 @@
 node_modules
 docker-compose.override.yml
+dist/
+secrets/

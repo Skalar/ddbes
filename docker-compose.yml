@@ -1,14 +1,26 @@
 version: '2'
 
-volumes:
-  compiled:
-
 services:
   dev:
+    tty: true
     build: .
-    working_dir: /ddbes/compiled
+    working_dir: /ddbes
     volumes:
-      - .:/ddbes/src
-      - /ddbes/src/node_modules
-      - compiled:/ddbes/compiled
-    command: devops/start-dev.sh
+      - .:/ddbes:cached
+      - /ddbes/node_modules
+    environment:
+      TABLE_NAME: ${USER}-ddbes-tests
+      BUCKET_NAME: ${USER}-ddbes-tests
+      
+  # For running integration tests locally without an AWS account
+
+  dynamodb:
+    image: dwmkerr/dynamodb
+    command: -sharedDb -inMemory
+    volumes:
+      - /data
+
+  s3:
+    image: skalar/fakes3
+    command: s3rver --hostname 0.0.0.0 --port 5000 --directory /tmp/s3 --cors --silent
+  

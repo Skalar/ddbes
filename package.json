@@ -8,9 +8,11 @@
   "dependencies": {
     "async": "^2.5.0",
     "aws-sdk": "^2.100.0",
-    "ms": "^2.0.0",
-    "tempus-fugit": "^2.3.1",
     "uuid": "^3.1.0"
+  },
+  "scripts": {
+    "test": "scripts/run-tests",
+    "build": "scripts/build"
   },
   "babel": {
     "plugins": [
@@ -39,7 +41,8 @@
     ],
     "rules": {
       "no-magic-numbers": 0,
-      "no-process-env": 0
+      "no-process-env": 0,
+      "no-invalid-this": 0
     }
   },
   "devDependencies": {
@@ -52,6 +55,7 @@
     "blue-tape": "^1.0.0",
     "eslint": "^3.19.0",
     "eslint-config-skalar": "^0.0.7",
+    "lodash": "^4.17.4",
     "nodemon": "^1.11.0",
     "tap-spec": "^4.1.1",
     "tape": "^4.8.0"

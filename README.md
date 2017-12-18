@@ -1,8 +1,18 @@
 # ddbes
+
 DynamoDB Event Store
 
-## WARNING WARNING EXPERIMENTAL DO NOT USE..
-..unless I told you to, in which case it is TOTALLY fine.
+## WARNING
+
+You should probably not be using this unless you are familiar with event sourcing and willing to read and understand the code.
+
+## Table of contents
+
+* [Installation](#installation)
+* [Configuration](#configuration)
+* [Example usage](#example-usage)
+* [TODO: API docs](#api-docs)
+* [Development](#development)
 
 ## Installation
 
@@ -12,72 +22,58 @@ yarn add ddbes
 
 ## Configuration
 
-Configuration is done on multiple levels:
-* Property on ddbes.config
-* Static property on the Aggregate class
-* Passed to AggregateClass constructor() / static load() / static create()
+Configuration parameters can be
+
+* set via ddbes.config.update()
+* static properties on the Aggregate class
+* passed to AggregateClass constructor(), static load() or static create()
 
 Configuration parameters:
 
-| Parameter          | Default            | Description                                                   |
-| ------------------ | ------------------ | ------------------------------------------------------------- |
-| AWS                | undefined          | configured aws-sdk to use                                     |
-| snapshotsEnabled   | false              | boolean                                                       |
-| snapshotS3Bucket   | undefined          | string                                                        |
-| snapshotS3Prefix   | undefined          | string                                                        |
-| snapshotFrequency  | 100                | number - a snapshot is taken each *snapshotFrequency* commits |
-| getLogger          | name => noopLogger | function that should return the logger to use                 |
+| Parameter          | Default | Description                                                      |
+| ------------------ | ------- | ---------------------------------------------------------------- |
+| AWS                |         | configured aws-sdk instance to use                               |
+| tableName          | ddbes   | DynamoDB table name to use                                       |
+| snapshots          | false   | enable/disble snapshots                                          |
+| snapshotsBucket    |         | name of S3 bucket to use for snapshots                           |
+| snapshotsPrefix    |         | S3 key prefix for snapshots                                      |
+| snapshotsFrequency | 100     | How often snapshots is taken (each _snapshotsFrequency_ commits) |
+| logger             |         | logger that supports .debug(), .info(), .warn(), .error()        |
 
+## Example usage
 
-## Setup
+### Setup and teardown of external services
 
 ```javascript
-import {createTable, deleteTable, setupAutoScaling, removeAutoScaling} from 'ddbes'
+import ddbes from 'ddbes'
 
-const tableName = 'myapp-commits'
+ddbes.config.update({tableName: 'myapp-commits'})
 
 async function setup() {
-  await createTable({
-    tableName,
-    tableReadCapacity: 50,
-    tableWriteCapacity: 50,
+  await ddbes.dynamodb.createTable({
+    tableReadCapacity: 5,
+    tableWriteCapacity: 5,
   })
 
-  await setupAutoScaling({
-    tableName,
-    tableReadMinCapacity: 10,
+  await ddbes.dynamodb.setupAutoScaling({
+    tableReadMinCapacity: 5,
     tableReadMaxCapacity: 100,
-    tableWriteMinCapacity: 10,
+    tableWriteMinCapacity: 5,
     tableWriteMaxCapacity: 100,
     utilizationTargetInPercent: 60,
   })
 }
 
 async function teardown() {
-  await removeAutoScaling({name: tableName)
-  await deleteTable({name: tableName})
+  await ddbes.dynamodb.removeAutoScaling()
+  await ddbes.dynamodb.deleteTable()
 }
-
 ```
-
-## Examples
 
 ### Single instance aggregate
 
-aggregates/ApplicationSettings.js
-
 ```javascript
 class ApplicationSettings extends Aggregate {
-  static commands = {
-    enableDebug() {
-      return this.commit({type: 'DebugModeEnabled'})
-    },
-
-    disableDebug() {
-      return this.commit({type: 'DebugModeDisabled'})
-    }
-  }
-
   static function reducer(state = {}, event, commit) {
     switch (event.type) {
       case 'DebugModeEnabled': {
@@ -91,24 +87,36 @@ class ApplicationSettings extends Aggregate {
       default: return state
     }
   }
+
+  enableDebug() {
+    return this.commit({type: 'DebugModeEnabled'})
+  },
+
+  disableDebug() {
+    return this.commit({type: 'DebugModeDisabled'})
+  }
 }
-```
 
-```javascript
-import {ApplicationSettings} from './aggregates'
-
-async function doSomething() {
+async function testing() {
   const settings = await ApplicationSettings.load()
+
   await settings.enableDebug()
+  settings.state // {debugMode: true, updatedAt: '.....'}
 
-  console.log(settings.state.debugMode) // true
+  const timeWhenDebugWasEnabled = new Date()
 
-  // ... time passes and someone else runs disableDebug()
+  // ... time passes and disableDebug() is run elsewhere
 
   // refresh aggregate instance from snapshots and store
   await settings.hydrate()
 
-  console.log(settings.state.debugMode) // false
+  settings.state.debugMode // false
+
+  const settingsAtVersion1 = ApplicationSettings.load({version: 1})
+  settings.state.debugMode // true
+
+  const settingsAtSpecificTime = ApplicationSettings.load({time: timeWhenDebugWasEnabled})
+  settings.state.debugMode // true
 }
 ```
 
@@ -117,16 +125,15 @@ async function doSomething() {
 aggregates/User.js
 
 ```javascript
-import {AggregateWithKey} from 'ddbes'
+import {Aggregate} from 'ddbes'
 
-class User extends AggregateWithKey {
+class User extends Aggregate {
   // default
-  static keyProperties = [{
+  static keySchema = [{
     name: 'id',
-    defaultValue: () => uuid()
+    value: id => id || uuid()
   }]
 
-  static commands = {
     changeName(name) {
       return this.commit({type: 'UserNameChanged', name})
     },
@@ -152,12 +159,8 @@ class User extends AggregateWithKey {
     return this.commit({type: 'Created', id, name})
   }
 }
-```
 
-```javascript
-import {User} from './aggregates'
-
-async function doSomething() {
+async function testing() {
   const gudleik = await User.create({name: 'Gudleik'})
   await gudleik.changeName('Gudleika')
 
@@ -172,57 +175,51 @@ async function doSomething() {
 }
 ```
 
-### Command validation
-aggregates/commands.js
+### Attaching externally defined commands to aggregate class
+
 ```javascript
+import {Aggregate} from 'ddbes'
+import * as commands from './commands'
+
+class MyAggregate extends Aggregate {
+  // ...
+}
+
+Object.assign(MyAggregate.prototype, commands)
+
+export default MyAggregate
+```
+
+### Command validation and retrying on version conflicts
+
+You can decorate your command functions by using **aggregateCommand()**
+
+```javascript
+import {aggregateCommand} from 'ddbes'
 import Joi from 'joi'
-import User from 'aggregates/User'
 
-async function doSomething({foo, bar}) {
-  return this.commit({
-    type: 'SomethingDone',
-    foo,
-    bar
-  })
+async function addItem(name) {
+  // ...
+  await this.commit({type: 'ItemAdded', name})
 }
 
-doSomething.validation = args => Joi.validate(
-  args,
-  Joi.array().length(1).label('arguments').items(
-    Joi.object().required().keys({
-      foo: Joi.string().required(),
-      bar: Joi.number().required()
-    })
-  )
-)
-
-async function doSomethingElse({userId, reason}) {
-  return this.commit({
-    type: 'SomethingElseDone',
-    userId,
-    reason
-  })
-}
-
-// Validation supports async validations
-doSomethingElse.validation = async args => {
-  const argsWithDefaults = await Joi.validate(
+const validation = (...args) =>
+  Joi.validate(
     args,
-    Joi.array().length(1).label('arguments').items(
-      Joi.object().required().keys({
-        userId: Joi.string().required(),
-        reason: Joi.string().required(9)
-      })
-    )
+    Joi.array()
+      .length(1)
+      .label('arguments')
+      .items(
+        Joi.string()
+          .label('name')
+          .required()
+      )
   )
 
-  const user = await User.load(args.userId)
-  if (!user) throw new Error('User not found')
-  
-  return argsWithDefaults
-}
-
-export default {doSomething, doSomethingElse}
+export default aggregateCommand(myCommand, {
+  validation, // the array of args returned from the validation function is applied to the command
+  retry: true, // Reruns on the command on version conflicts
+})
 ```
 
 ### Projector
@@ -263,8 +260,8 @@ const projector = new Projector({
             type: 'User',
             id: keyString,
             body: {
-              doc: {name, updatedAt}
-            }
+              doc: {name, updatedAt},
+            },
           })
           break
         }
@@ -279,3 +276,15 @@ projector.start({watch: true})
 // ... something happens ...
 projector.stop()
 ```
+
+## Development
+
+### Running development environment
+
+```shell
+docker-compose up
+```
+
+This should bring up a local dynamodb and s3, as well as running tests and linting every time the code changes.
+
+Built code is available in dist/.

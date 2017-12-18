@@ -1,0 +1,7 @@
+#!/bin/ash
+
+babel \
+  --copy-files \
+  --ignore node_modules,.dockerignore,docker-compose.yml,Dockerfile,README.md,dist,.DS_Store,.git \
+  --out-dir dist \
+  .
