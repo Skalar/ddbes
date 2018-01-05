@@ -1,4 +1,4 @@
-import clearCommits from './clearCommits'
+import {clearCommits} from '~/lib/dynamodb'
 import {clearSnapshots} from '~/lib/s3'
 
 async function withCleanup(fn) {
