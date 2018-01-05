@@ -7,7 +7,7 @@ async function clearCommits({tableName = config.tableName} = {}) {
   while (!queryResult || queryResult.LastEvaluatedKey) {
     queryResult = await ddb
       .scan({
-        TableName: config.tableName,
+        TableName: tableName,
         ExclusiveStartKey: queryResult
           ? queryResult.LastEvaluatedKey
           : undefined,
@@ -25,8 +25,8 @@ async function clearCommits({tableName = config.tableName} = {}) {
             [tableName]: items.slice(i, i + 25).map(item => ({
               DeleteRequest: {
                 Key: {
-                  aggregateType: item.aggregateType,
-                  keyAndVersion: item.keyAndVersion,
+                  a: item.a,
+                  k: item.k,
                 },
               },
             })),
