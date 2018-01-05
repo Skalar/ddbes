@@ -11,6 +11,7 @@ You should probably not be using this unless you are familiar with event sourcin
 * [Installation](#installation)
 * [Configuration](#configuration)
 * [Example usage](#example-usage)
+* [WebSocket event streaming](#websocket-event-streaming)
 * [TODO: API docs](#api-docs)
 * [Development](#development)
 
@@ -258,6 +259,38 @@ const projector = new Projector({
 projector.start({watch: true})
 // ... something happens ...
 projector.stop()
+```
+
+## WebSocket event streaming
+
+### EventStreamServer
+
+Websocket server that polls the event store and sends filtered events to its clients.
+
+```javascript
+import {EventStreamServer} from 'ddbes'
+
+const server = new EventStreamServer({port: 80, pollDelay: 100})
+```
+
+### EventStream
+
+A client for EventStreamServer that is an event emitter and an AsyncIterator.
+Events matching either of the provided filter sets will be sent.
+
+```javascript
+const eventStream = new EventStream({
+  wsUrl: 'ws://localhost',
+  events: [
+    {
+      aggregateType: 'Cart',
+      type: ['ItemAdded', 'ItemRemoved'],
+    },
+    {
+      aggregateType: {regexp: '^Customer.'},
+    },
+  ],
+})
 ```
 
 ## Development
