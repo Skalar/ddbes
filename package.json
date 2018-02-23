@@ -21,26 +21,23 @@
       "root-import",
       "transform-object-rest-spread",
       "transform-export-extensions",
-      "transform-class-properties"
+      "transform-class-properties",
+      "transform-async-to-generator",
+      "transform-async-generator-functions"
     ],
     "presets": [
       [
         "env",
         {
           "targets": {
-            "node": "current"
-          },
-          "exclude": [
-            "transform-async-to-generator"
-          ]
+            "node": "6.10"
+          }
         }
       ]
     ]
   },
   "eslintConfig": {
-    "extends": [
-      "skalar"
-    ],
+    "extends": ["skalar"],
     "rules": {
       "no-magic-numbers": 0,
       "no-process-env": 0,
@@ -51,6 +48,8 @@
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-plugin-root-import": "^5.1.0",
+    "babel-plugin-transform-async-generator-functions": "^6.24.1",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-export-extensions": "^6.22.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
