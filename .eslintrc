@@ -1,0 +1,9 @@
+{
+  "extends": ["skalar"],
+  "rules": {
+    "no-magic-numbers": 0,
+    "no-process-env": 0,
+    "no-invalid-this": 0,
+    "no-labels": 0
+  }
+}

@@ -1,0 +1,16 @@
+#!/bin/ash
+
+rm -rf /dist
+cp -R . /dist
+
+babel \
+  --copy-files \
+  --quiet \
+  --out-dir /dist/compat \
+  ./lib
+
+yarn version
+
+cd /dist
+
+yarn publish

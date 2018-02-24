@@ -8,6 +8,7 @@ services:
     volumes:
       - .:/ddbes:cached
       - /ddbes/node_modules
+      - $HOME/.npmrc:/root/.npmrc
     environment:
       TABLE_NAME: ${USER}-ddbes-tests
       BUCKET_NAME: ${USER}-ddbes-tests

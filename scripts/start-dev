@@ -4,20 +4,8 @@ set -e
 
 cd /ddbes
 
-nodemon \
-  --delay 0.5 \
-  --on-change-only \
-  --quiet \
+watchexec \
+  -p \
+  --exts js \
   --watch . \
-  --ignore node_modules \
-  --exec "eslint --color --ignore-pattern /node_modules ." &
-
-nodemon \
-  --delay 0.5 \
-  --on-change-only \
-  --quiet \
-  --watch . \
-  --ignore node_modules \
-  --exec "scripts/run-tests all" &
-
-wait
+  "scripts/run-tests all; eslint --color --ignore-pattern /node_modules ." 
