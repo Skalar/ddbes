@@ -1,5 +1,5 @@
-import ddbes from '~/lib'
-import AWS from 'aws-sdk'
+const ddbes = require('../../main')
+const AWS = require('aws-sdk')
 
 async function teardown() {
   const s3 = new AWS.S3()
@@ -18,7 +18,7 @@ async function teardown() {
   return s3.deleteBucket({Bucket}).promise()
 }
 
-export default teardown
+module.exports = teardown
 
 if (require.main === module) {
   teardown()

@@ -1,0 +1,38 @@
+{
+  "ignore": ["node_modules/"],
+  "env": {
+    "6.13.0": {
+      "plugins": [
+        "@babel/plugin-proposal-object-rest-spread",
+        "@babel/plugin-proposal-async-generator-functions"
+      ],
+      "presets": [
+        [
+          "@babel/preset-env",
+          {
+            "targets": {
+              "node": "6.13.0"
+            }
+          }
+        ]
+      ]
+    },
+    "9.0.0": {
+      "plugins": [
+        "@babel/plugin-proposal-async-generator-functions",
+        "@babel/plugin-proposal-object-rest-spread",
+        "@babel/plugin-transform-async-to-generator"
+      ],
+      "presets": [
+        [
+          "@babel/preset-env",
+          {
+            "targets": {
+              "node": "9.0.0"
+            }
+          }
+        ]
+      ]
+    }
+  }
+}

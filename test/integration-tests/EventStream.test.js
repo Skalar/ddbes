@@ -1,9 +1,8 @@
-import test from 'blue-tape'
-import {withCleanup} from '~/test/utils'
-import * as dynamodb from '~/lib/dynamodb'
-import EventStreamServer from './EventStreamServer'
-import EventStream from './EventStream'
-import {getAsyncIterator} from 'iterall'
+const test = require('blue-tape')
+const ddbes = require('../../main')
+const {withCleanup} = require('../utils')
+const {EventStreamServer, EventStream, dynamodb} = ddbes
+const {getAsyncIterator} = require('iterall')
 
 test('EventStream EventEmitter', async t => {
   const server = new EventStreamServer({port: 8888})

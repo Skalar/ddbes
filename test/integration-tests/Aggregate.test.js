@@ -1,12 +1,10 @@
-import test from 'blue-tape'
-import {withCleanup, assertAggregateCommits} from '~/test/utils'
-import * as dynamodb from '~/lib/dynamodb'
-import * as s3 from '~/lib/s3'
-
-import Aggregate from '~/lib/Aggregate'
+const test = require('blue-tape')
+const ddbes = require('../../main')
+const {withCleanup, assertAggregateCommits} = require('../utils')
+const {Aggregate} = ddbes
 
 class Cart extends Aggregate {
-  static reducer = (state = {items: []}, event) => {
+  static reducer(state = {items: []}, event) {
     switch (event.type) {
       case 'Created': {
         const {accountId, storeId} = event
@@ -41,16 +39,16 @@ class Cart extends Aggregate {
 }
 
 class CartWithKeyProps extends Cart {
-  static keySchema = ['accountId', 'storeId']
-
   create({accountId, storeId}) {
     return this.commit({type: 'Created', accountId, storeId})
   }
 }
 
+CartWithKeyProps.keySchema = ['accountId', 'storeId']
+
 test('Aggregate.load() without key', async t => {
   await withCleanup(async () => {
-    await dynamodb.batchWriteCommits({
+    await ddbes.dynamodb.batchWriteCommits({
       aggregateType: 'Cart',
       commits: [
         {
@@ -137,7 +135,7 @@ test('Aggregate.load() without key', async t => {
 
 test('Aggregate.load() with key', async t => {
   await withCleanup(async () => {
-    await dynamodb.batchWriteCommits({
+    await ddbes.dynamodb.batchWriteCommits({
       aggregateType: 'CartWithKeyProps',
       aggregateKey: '0123.oslo',
       commits: [
@@ -238,7 +236,7 @@ test('Aggregate.load() with key', async t => {
 
 test('Aggregate#getState()', async t => {
   await withCleanup(async () => {
-    await dynamodb.batchWriteCommits({
+    await ddbes.dynamodb.batchWriteCommits({
       aggregateType: 'Cart',
       commits: [
         {
@@ -343,7 +341,11 @@ test('Aggregate#writeSnapshot()', async t => {
     await aggregate.addItem('firstItem')
     await aggregate.writeSnapshot()
 
-    const {version, state, upcastersChecksum} = await s3.readAggregateSnapshot({
+    const {
+      version,
+      state,
+      upcastersChecksum,
+    } = await ddbes.s3.readAggregateSnapshot({
       aggregateType: 'Cart',
       aggregateKey: '@',
     })
@@ -367,7 +369,7 @@ test('Aggregate#writeSnapshot()', async t => {
       }
 
       await aggregate.writeSnapshot()
-      const {upcastersChecksum} = await s3.readAggregateSnapshot({
+      const {upcastersChecksum} = await ddbes.s3.readAggregateSnapshot({
         aggregateType: 'Cart',
         aggregateKey: '@',
       })
@@ -413,10 +415,11 @@ test('Aggregate#hydrate()', async t => {
     {
       const aggregate = await Cart.load()
 
-      await dynamodb.batchWriteCommits({
+      await ddbes.dynamodb.batchWriteCommits({
         aggregateType: 'Cart',
         commits: [
           {
+            version: 1,
             committedAt: new Date('2018-01-01'),
             events: [
               {
@@ -426,6 +429,7 @@ test('Aggregate#hydrate()', async t => {
             ],
           },
           {
+            version: 2,
             committedAt: new Date('2018-01-02'),
             events: [
               {
@@ -437,7 +441,7 @@ test('Aggregate#hydrate()', async t => {
         ],
       })
 
-      await s3.writeAggregateSnapshot({
+      await ddbes.s3.writeAggregateSnapshot({
         aggregateType: 'Cart',
         aggregateKey: '@',
         version: 1,
@@ -469,7 +473,7 @@ test('Aggregate#hydrate()', async t => {
         'specified time: uses snapshot when specific time is after snapshots head commit'
       )
 
-      await s3.writeAggregateSnapshot({
+      await ddbes.s3.writeAggregateSnapshot({
         aggregateType: 'Cart',
         aggregateKey: '@',
         version: 2,
@@ -510,7 +514,7 @@ test('Aggregate#hydrate()', async t => {
       await aggregate.addItem('firstItem')
       await aggregate.writeSnapshot()
 
-      const {state} = await s3.readAggregateSnapshot({
+      const {state} = await ddbes.s3.readAggregateSnapshot({
         aggregateType: 'Cart',
         aggregateKey: '@',
       })
@@ -531,7 +535,7 @@ test('Aggregate#hydrate()', async t => {
       aggregate = await Cart.load()
 
       t.deepEqual(
-        (await s3.readAggregateSnapshot({
+        (await ddbes.s3.readAggregateSnapshot({
           aggregateType: 'Cart',
           aggregateKey: '@',
         })).state,
@@ -660,7 +664,7 @@ test('Aggregate.eachInstance()', async t => {
     const storeIds = ['oslo', 'bergen', 'trondheim']
 
     for (const storeId of storeIds) {
-      await dynamodb.batchWriteCommits({
+      await ddbes.dynamodb.batchWriteCommits({
         aggregateType: 'CartWithKeyProps',
         aggregateKey: `myaccount.${storeId}`,
         commits: [
@@ -713,130 +717,134 @@ test('Aggregate.eachInstance()', async t => {
   })
 
   test('Aggregate.commit() without key props', async t => {
-    const commit = await Cart.commit([{type: 'ItemAdded', name: 'firstItem'}])
+    await withCleanup(async () => {
+      const commit = await Cart.commit([{type: 'ItemAdded', name: 'firstItem'}])
 
-    await assertAggregateCommits(
-      t,
-      {
-        aggregateType: 'Cart',
-        commits: [
-          {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'firstItem'}],
-          },
+      await assertAggregateCommits(
+        t,
+        {
+          aggregateType: 'Cart',
+          commits: [
+            {
+              version: 1,
+              events: [{type: 'ItemAdded', name: 'firstItem'}],
+            },
+          ],
+        },
+        'commits correctly to an empty aggregate'
+      )
+
+      t.equal(typeof commit, 'object', 'returns a commit')
+      t.deepEqual(
+        Object.keys(commit),
+        [
+          'aggregateType',
+          'aggregateKey',
+          'commitId',
+          'version',
+          'active',
+          'committedAt',
+          'events',
         ],
-      },
-      'commits correctly to an empty aggregate'
-    )
+        'the returned commit has the correct attributes'
+      )
 
-    t.equal(typeof commit, 'object', 'returns a commit')
-    t.deepEqual(
-      Object.keys(commit),
-      [
-        'aggregateType',
-        'aggregateKey',
-        'commitId',
-        'version',
-        'active',
-        'committedAt',
-        'events',
-      ],
-      'the returned commit has the correct attributes'
-    )
+      await Cart.commit([{type: 'ItemAdded', name: 'secondItem'}])
 
-    await Cart.commit([{type: 'ItemAdded', name: 'secondItem'}])
+      await assertAggregateCommits(
+        t,
+        {
+          aggregateType: 'Cart',
+          commits: [
+            {
+              version: 1,
+              events: [{type: 'ItemAdded', name: 'firstItem'}],
+            },
+            {
+              version: 2,
+              events: [{type: 'ItemAdded', name: 'secondItem'}],
+            },
+          ],
+        },
+        'commits correctly to an aggregate with existing commit'
+      )
 
-    await assertAggregateCommits(
-      t,
-      {
-        aggregateType: 'Cart',
-        commits: [
-          {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'firstItem'}],
-          },
-          {
-            version: 2,
-            events: [{type: 'ItemAdded', name: 'secondItem'}],
-          },
-        ],
-      },
-      'commits correctly to an aggregate with existing commit'
-    )
-
-    await Cart.commit([{type: 'ItemAdded', name: 'thirdItem'}])
-    await assertAggregateCommits(
-      t,
-      {
-        aggregateType: 'Cart',
-        commits: [
-          {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'firstItem'}],
-          },
-          {
-            version: 2,
-            events: [{type: 'ItemAdded', name: 'secondItem'}],
-          },
-          {
-            version: 3,
-            events: [{type: 'ItemAdded', name: 'thirdItem'}],
-          },
-        ],
-      },
-      'commits correctly to an aggregate with existing commit'
-    )
+      await Cart.commit([{type: 'ItemAdded', name: 'thirdItem'}])
+      await assertAggregateCommits(
+        t,
+        {
+          aggregateType: 'Cart',
+          commits: [
+            {
+              version: 1,
+              events: [{type: 'ItemAdded', name: 'firstItem'}],
+            },
+            {
+              version: 2,
+              events: [{type: 'ItemAdded', name: 'secondItem'}],
+            },
+            {
+              version: 3,
+              events: [{type: 'ItemAdded', name: 'thirdItem'}],
+            },
+          ],
+        },
+        'commits correctly to an aggregate with existing commit'
+      )
+    })
   })
 
   test('Aggregate.commit() with key props', async t => {
-    await CartWithKeyProps.commit(
-      {
-        accountId: '0123',
-        storeId: 'oslo',
-      },
-      [{type: 'ItemAdded', name: 'firstItem'}]
-    )
+    await withCleanup(async () => {
+      await CartWithKeyProps.commit(
+        {
+          accountId: '0123',
+          storeId: 'oslo',
+        },
+        [{type: 'ItemAdded', name: 'firstItem'}]
+      )
 
-    await assertAggregateCommits(
-      t,
-      {
-        aggregateType: 'CartWithKeyProps',
-        aggregateKey: '0123.oslo',
-        commits: [
-          {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'firstItem'}],
-          },
-        ],
-      },
-      'commits correctly to an empty aggregate'
-    )
+      await assertAggregateCommits(
+        t,
+        {
+          aggregateType: 'CartWithKeyProps',
+          aggregateKey: '0123.oslo',
+          commits: [
+            {
+              version: 1,
+              events: [{type: 'ItemAdded', name: 'firstItem'}],
+            },
+          ],
+        },
+        'commits correctly to an empty aggregate'
+      )
 
-    await CartWithKeyProps.commit(
-      {
-        accountId: '0123',
-        storeId: 'oslo',
-      },
-      [{type: 'ItemAdded', name: 'secondItem'}]
-    )
+      await CartWithKeyProps.commit(
+        {
+          accountId: '0123',
+          storeId: 'oslo',
+        },
+        [{type: 'ItemAdded', name: 'secondItem'}]
+      )
 
-    await assertAggregateCommits(
-      t,
-      {
-        aggregateType: 'CartWithKeyProps',
-        aggregateKey: '0123.oslo',
-        commits: [
-          {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'firstItem'}],
-          },
-          {
-            version: 2,
-            events: [{type: 'ItemAdded', name: 'secondItem'}],
-          },
-        ],
-      },
-      'commits correctly to an aggregate with existing commit'
-    )
+      await assertAggregateCommits(
+        t,
+        {
+          aggregateType: 'CartWithKeyProps',
+          aggregateKey: '0123.oslo',
+          commits: [
+            {
+              version: 1,
+              events: [{type: 'ItemAdded', name: 'firstItem'}],
+            },
+            {
+              version: 2,
+              events: [{type: 'ItemAdded', name: 'secondItem'}],
+            },
+          ],
+        },
+        'commits correctly to an aggregate with existing commit'
+      )
+    })
   })
 })

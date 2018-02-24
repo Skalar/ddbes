@@ -1,5 +1,4 @@
-import {clearCommits} from '~/lib/dynamodb'
-import {clearSnapshots} from '~/lib/s3'
+const {dynamodb: {clearCommits}, s3: {clearSnapshots}} = require('../../main')
 
 async function withCleanup(fn) {
   try {
@@ -9,4 +8,4 @@ async function withCleanup(fn) {
   }
 }
 
-export default withCleanup
+module.exports = withCleanup

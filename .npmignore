@@ -2,3 +2,9 @@ test/
 scripts/
 **/*.test.js
 **/*.test.integration.js
+.eslintrc
+.babelrc
+.dockerignore
+.editorconfig
+docker-compose.yml
+yarn.lock

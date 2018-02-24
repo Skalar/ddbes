@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import ddbes from '~/lib'
-import AWS from 'aws-sdk'
+const ddbes = require('../../main')
+const AWS = require('aws-sdk')
 
 async function setup() {
   await ddbes.dynamodb.createTable({
@@ -21,7 +21,7 @@ async function setup() {
   }
 }
 
-export default setup
+module.exports = setup
 
 if (require.main === module) {
   setup()

@@ -1,24 +1,27 @@
-import {getAggregateCommits} from '~/lib/dynamodb'
-import {pick} from 'lodash'
+const {dynamodb: {getAggregateCommits}} = require('../../main')
+const {pick} = require('lodash')
 
 async function assertAggregateCommits(
   t,
-  {aggregateType, aggregateKey = '@', commits},
+  {aggregateType, aggregateKey = '@', commits: providedCommits},
   description = 'the aggregate has the expected commits'
 ) {
-  let storeCommits = []
+  const actualCommits = []
 
-  await getAggregateCommits({aggregateType, aggregateKey}, newCommits => {
-    storeCommits = [...storeCommits, ...newCommits]
-  })
+  for await (const commit of getAggregateCommits({
+    aggregateType,
+    aggregateKey,
+  })) {
+    actualCommits.push(commit)
+  }
 
   t.deepEqual(
-    storeCommits.map((commit, i) =>
-      pick(commit, Object.keys(commits[i] || commit))
+    actualCommits.map((commit, i) =>
+      pick(commit, Object.keys(providedCommits[i] || commit))
     ),
-    commits,
+    providedCommits,
     description
   )
 }
 
-export default assertAggregateCommits
+module.exports = assertAggregateCommits

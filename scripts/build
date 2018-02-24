@@ -1,7 +1,32 @@
-#!/bin/ash
+#!/bin/bash
 
-babel \
-  --copy-files \
-  --ignore node_modules,.dockerignore,docker-compose.yml,Dockerfile,dist,.DS_Store,.git \
-  --out-dir dist \
-  .
+set -e
+
+babel=/ddbes/node_modules/@babel/cli/bin/babel.js
+readarray -t targets < .transpile-targets
+
+rm -rf /dist
+mkdir -p /dist
+ln -s /ddbes/node_modules /dist/node_modules
+ln -s /src/.git /dist/.git
+cp -R lib test package.json main.js .npmignore /dist/
+
+for target in "${targets[@]}"
+do
+  echo -n "Transpiling for node $target "
+
+  BABEL_ENV=$target $babel \
+    --copy-files \
+    --quiet \
+    --out-dir /dist/lib-$target \
+    lib
+
+  BABEL_ENV=$target $babel \
+    --copy-files \
+    --quiet \
+    --out-dir /dist/test-$target \
+    test
+
+  echo "- done"
+done
+

@@ -188,7 +188,7 @@ class MyAggregate extends Aggregate {
 
 Object.assign(MyAggregate.prototype, commands)
 
-export default MyAggregate
+module.exports = MyAggregate
 ```
 
 ### Retrying on version conflicts
@@ -203,7 +203,7 @@ async function addItem(name) {
   await this.commit({type: 'ItemAdded', name})
 }
 
-export default aggregateCommand(myCommand, {retry: true})
+module.exports = aggregateCommand(myCommand, {retry: true})
 ```
 
 ### Projector

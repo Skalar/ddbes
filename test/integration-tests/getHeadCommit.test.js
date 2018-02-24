@@ -1,7 +1,9 @@
-import test from 'blue-tape'
-import {withCleanup} from '~/test/utils'
-import batchWriteCommits from './batchWriteCommits'
-import getHeadCommit from './getHeadCommit'
+const test = require('blue-tape')
+const ddbes = require('../../main')
+
+const {withCleanup} = require('../utils')
+
+const {dynamodb: {batchWriteCommits, getHeadCommit}} = ddbes
 
 test('dynamodb.getHeadCommit()', async t => {
   await withCleanup(async () => {

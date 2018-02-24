@@ -1,0 +1,7 @@
+#!/bin/bash
+
+echo -e "\n# Linting"
+
+eslint --color --ignore-pattern /node_modules .
+
+echo "done."
