@@ -1,5 +1,5 @@
-import ddbes from '../../lib'
-import AWS from 'aws-sdk'
+const ddbes = require('../../lib')
+const AWS = require('aws-sdk')
 
 AWS.config.update({
   accessKeyId: 'xxx',

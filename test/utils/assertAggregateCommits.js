@@ -1,5 +1,5 @@
-import {getAggregateCommits} from '~/lib/dynamodb'
-import {pick} from 'lodash'
+const {getAggregateCommits} = require('../../lib/dynamodb')
+const {pick} = require('lodash')
 
 async function assertAggregateCommits(
   t,
@@ -24,4 +24,4 @@ async function assertAggregateCommits(
   )
 }
 
-export default assertAggregateCommits
+module.exports = assertAggregateCommits

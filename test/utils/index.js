@@ -1,2 +1,2 @@
-export withCleanup from './withCleanup'
-export assertAggregateCommits from './assertAggregateCommits'
+module.exports.withCleanup = require('./withCleanup')
+module.exports.assertAggregateCommits = require('./assertAggregateCommits')

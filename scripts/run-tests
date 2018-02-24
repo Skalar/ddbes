@@ -4,16 +4,17 @@ set -e
 
 type=${1:-unit}
 config=${TEST_CONFIG:-local}
-
+PATH=$PATH:./node_modules/.bin
+TAPE_BIN=./node_modules/.bin/tape
 if [ "$type" = "unit" ] || [ "$type" = "all" ]; then
-  NODE_ENV=test tape '**/*.test.js' | tap-spec
+  NODE_ENV=test node --harmony $TAPE_BIN 'lib/**/*.test.js' | tap-spec
 fi
 
 
 if [ "$type" = "integration" ] || [ "$type" = "all" ]; then
-  node -r ./test/configs/$config.js test/utils/setup.js
-  NODE_ENV=test tape -r ./test/configs/$config.js '**/*.test.integration.js' | tap-spec
-  node -r ./test/configs/$config.js test/utils/teardown.js
+  node --harmony -r ./test/configs/$config.js test/utils/setup.js
+  NODE_ENV=test node --harmony $TAPE_BIN -r ./test/configs/$config.js '**/*.test.integration.js' | tap-spec
+  node --harmony -r ./test/configs/$config.js test/utils/teardown.js
 fi
 
 

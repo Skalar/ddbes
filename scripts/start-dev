@@ -2,29 +2,15 @@
 
 set -e
 
-echo "Watching and compiling files with babel..."
-
 cd /ddbes
-
-babel \
-  --copy-files \
-  --ignore node_modules,.dockerignore,docker-compose.yml,Dockerfile,dist,.DS_Store,.git \
-  --out-dir dist \
-  --source-maps inline \
-  --watch \
-  . &
-
-cp .npmignore dist/
 
 nodemon \
   --delay 0.5 \
   --on-change-only \
   --quiet \
   --watch . \
-  --ignore node_modules,dist \
-  --exec "eslint --color --ignore-pattern /node_modules --ignore-pattern /dist ." &
-
-cd /ddbes/dist
+  --ignore node_modules \
+  --exec "eslint --color --ignore-pattern /node_modules ." &
 
 nodemon \
   --delay 0.5 \
