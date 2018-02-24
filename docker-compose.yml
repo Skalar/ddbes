@@ -6,9 +6,9 @@ services:
     build: .
     working_dir: /ddbes
     volumes:
-      - .:/ddbes:cached
-      - /ddbes/node_modules
+      - .:/src:cached
       - $HOME/.npmrc:/root/.npmrc
+      - $HOME/.gitconfig:/root/.gitconfig
     environment:
       TABLE_NAME: ${USER}-ddbes-tests
       BUCKET_NAME: ${USER}-ddbes-tests

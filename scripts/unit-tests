@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+readarray -t targets < .transpile-targets
+
+TAPE_BIN=./node_modules/.bin/tape
+reporter=${REPORTER:-faucet}
+
+echo -e "\n# Unit tests (non-transpiled, node 9.6.1 with --harmony)"
+
+NODE_ENV=test node --harmony $TAPE_BIN 'lib/**/*.test.js' | $reporter
+
+if [[ "$@" == "--all-targets" ]]
+then
+  cd /dist
+
+  for target in "${targets[@]}"
+  do
+    echo -e "\n# Unit tests (transpiled, node $target)"
+    NODE_ENV=test /usr/local-$target/bin/node $TAPE_BIN "lib-${target}/**/*.test.js" | $reporter
+  done
+fi

@@ -1,0 +1,8 @@
+#!/bin/ash
+
+set -e
+
+yarn test
+
+cd /dist
+yarn publish $@

@@ -1,5 +1,4 @@
-const {clearCommits} = require('../../lib/dynamodb')
-const {clearSnapshots} = require('../../lib/s3')
+const {dynamodb: {clearCommits}, s3: {clearSnapshots}} = require('../../main')
 
 async function withCleanup(fn) {
   try {

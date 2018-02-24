@@ -1,8 +1,7 @@
 const test = require('blue-tape')
-const {withCleanup} = require('../test/utils')
-const dynamodb = require('./dynamodb')
-const EventStreamServer = require('./EventStreamServer')
-const EventStream = require('./EventStream')
+const ddbes = require('../../main')
+const {withCleanup} = require('../utils')
+const {EventStreamServer, EventStream, dynamodb} = ddbes
 const {getAsyncIterator} = require('iterall')
 
 test('EventStream EventEmitter', async t => {

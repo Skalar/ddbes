@@ -1,9 +1,7 @@
 const test = require('blue-tape')
-const {withCleanup, assertAggregateCommits} = require('../test/utils')
-const dynamodb = require('./dynamodb')
-const s3 = require('./s3')
-
-const Aggregate = require('./Aggregate')
+const ddbes = require('../../main')
+const {withCleanup, assertAggregateCommits} = require('../utils')
+const {Aggregate} = ddbes
 
 class Cart extends Aggregate {
   static reducer(state = {items: []}, event) {
@@ -50,7 +48,7 @@ CartWithKeyProps.keySchema = ['accountId', 'storeId']
 
 test('Aggregate.load() without key', async t => {
   await withCleanup(async () => {
-    await dynamodb.batchWriteCommits({
+    await ddbes.dynamodb.batchWriteCommits({
       aggregateType: 'Cart',
       commits: [
         {
@@ -137,7 +135,7 @@ test('Aggregate.load() without key', async t => {
 
 test('Aggregate.load() with key', async t => {
   await withCleanup(async () => {
-    await dynamodb.batchWriteCommits({
+    await ddbes.dynamodb.batchWriteCommits({
       aggregateType: 'CartWithKeyProps',
       aggregateKey: '0123.oslo',
       commits: [
@@ -238,7 +236,7 @@ test('Aggregate.load() with key', async t => {
 
 test('Aggregate#getState()', async t => {
   await withCleanup(async () => {
-    await dynamodb.batchWriteCommits({
+    await ddbes.dynamodb.batchWriteCommits({
       aggregateType: 'Cart',
       commits: [
         {
@@ -343,7 +341,11 @@ test('Aggregate#writeSnapshot()', async t => {
     await aggregate.addItem('firstItem')
     await aggregate.writeSnapshot()
 
-    const {version, state, upcastersChecksum} = await s3.readAggregateSnapshot({
+    const {
+      version,
+      state,
+      upcastersChecksum,
+    } = await ddbes.s3.readAggregateSnapshot({
       aggregateType: 'Cart',
       aggregateKey: '@',
     })
@@ -367,7 +369,7 @@ test('Aggregate#writeSnapshot()', async t => {
       }
 
       await aggregate.writeSnapshot()
-      const {upcastersChecksum} = await s3.readAggregateSnapshot({
+      const {upcastersChecksum} = await ddbes.s3.readAggregateSnapshot({
         aggregateType: 'Cart',
         aggregateKey: '@',
       })
@@ -413,7 +415,7 @@ test('Aggregate#hydrate()', async t => {
     {
       const aggregate = await Cart.load()
 
-      await dynamodb.batchWriteCommits({
+      await ddbes.dynamodb.batchWriteCommits({
         aggregateType: 'Cart',
         commits: [
           {
@@ -439,7 +441,7 @@ test('Aggregate#hydrate()', async t => {
         ],
       })
 
-      await s3.writeAggregateSnapshot({
+      await ddbes.s3.writeAggregateSnapshot({
         aggregateType: 'Cart',
         aggregateKey: '@',
         version: 1,
@@ -471,7 +473,7 @@ test('Aggregate#hydrate()', async t => {
         'specified time: uses snapshot when specific time is after snapshots head commit'
       )
 
-      await s3.writeAggregateSnapshot({
+      await ddbes.s3.writeAggregateSnapshot({
         aggregateType: 'Cart',
         aggregateKey: '@',
         version: 2,
@@ -512,7 +514,7 @@ test('Aggregate#hydrate()', async t => {
       await aggregate.addItem('firstItem')
       await aggregate.writeSnapshot()
 
-      const {state} = await s3.readAggregateSnapshot({
+      const {state} = await ddbes.s3.readAggregateSnapshot({
         aggregateType: 'Cart',
         aggregateKey: '@',
       })
@@ -533,7 +535,7 @@ test('Aggregate#hydrate()', async t => {
       aggregate = await Cart.load()
 
       t.deepEqual(
-        (await s3.readAggregateSnapshot({
+        (await ddbes.s3.readAggregateSnapshot({
           aggregateType: 'Cart',
           aggregateKey: '@',
         })).state,
@@ -662,7 +664,7 @@ test('Aggregate.eachInstance()', async t => {
     const storeIds = ['oslo', 'bergen', 'trondheim']
 
     for (const storeId of storeIds) {
-      await dynamodb.batchWriteCommits({
+      await ddbes.dynamodb.batchWriteCommits({
         aggregateType: 'CartWithKeyProps',
         aggregateKey: `myaccount.${storeId}`,
         commits: [

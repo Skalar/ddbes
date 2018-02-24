@@ -1,31 +1,38 @@
 {
   "name": "ddbes",
-  "version": "0.23.0",
+  "version": "0.24.0-alpha.5",
   "description": "DynamoDB Event Store",
-  "main": "lib/index.js",
+  "engines": {
+    "node": ">=6.5.0"
+  },
+  "main": "main.js",
   "author": "Trym Skaar",
   "license": "MIT",
   "dependencies": {
+    "@babel/polyfill": "^7.0.0-beta.40",
     "async": "^2.5.0",
     "aws-sdk": "^2.100.0",
     "iterall": "^1.1.3",
+    "semver": "^5.5.0",
     "uuid": "^3.1.0",
     "ws": "^3.3.3"
   },
   "scripts": {
-    "test": "scripts/run-tests",
+    "test":
+      "scripts/build && scripts/unit-tests --all-targets && scripts/integration-tests --all-targets",
     "build": "scripts/build"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
+    "@babel/cli": "^7.0.0-beta.40",
+    "@babel/core": "^7.0.0-beta.40",
+    "@babel/preset-env": "^7.0.0-beta.40",
     "babel-plugin-transform-async-generator-functions": "^6.24.1",
-    "babel-plugin-transform-async-to-generator": "^6.24.1",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "babel-preset-env": "^1.6.0",
     "blue-tape": "^1.0.0",
     "eslint": "^3.19.0",
     "eslint-config-skalar": "^0.0.7",
+    "faucet": "^0.0.1",
     "lodash": "^4.17.4",
+    "tap-dot": "^1.0.5",
     "tap-spec": "^4.1.1",
     "tape": "^4.8.0"
   },

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const ddbes = require('../../lib')
+const ddbes = require('../../main')
 const AWS = require('aws-sdk')
 
 async function setup() {

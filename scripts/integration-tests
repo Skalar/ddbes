@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -e
+
+readarray -t targets < .transpile-targets
+
+TAPE_BIN=./node_modules/.bin/tape
+reporter=${REPORTER:-faucet}
+config=${CONFIG:-local}
+export NODE_ENV=test
+
+echo -e "\n# Integration tests (non-transpiled, node 9.6.1 with --harmony)"
+
+node="node --harmony"
+
+$node -r ./test/configs/$config.js test/utils/setup.js
+$node $TAPE_BIN -r ./test/configs/$config.js 'test/integration-tests/**/*.test.js' | $reporter
+$node -r ./test/configs/$config.js test/utils/teardown.js
+
+if [[ "$@" == "--all-targets" ]]
+then
+  cd /dist
+
+  for target in "${targets[@]}"
+  do
+    echo -e "\n# Integration tests (transpiled, node $target)"
+
+    node=/usr/local-$target/bin/node  
+    
+    $node -r ./test-$target/configs/$config.js test-$target/utils/setup.js
+    $node $TAPE_BIN -r ./test-$target/configs/$config.js "test-$target/integration-tests/**/*.test.js" | $reporter
+    $node -r ./test-$target/configs/$config.js test-$target/utils/teardown.js
+  done
+fi

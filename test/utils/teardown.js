@@ -1,4 +1,4 @@
-const ddbes = require('../../lib')
+const ddbes = require('../../main')
 const AWS = require('aws-sdk')
 
 async function teardown() {

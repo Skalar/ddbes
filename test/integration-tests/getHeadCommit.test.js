@@ -1,7 +1,9 @@
 const test = require('blue-tape')
-const {withCleanup} = require('../../test/utils')
-const batchWriteCommits = require('./batchWriteCommits')
-const getHeadCommit = require('./getHeadCommit')
+const ddbes = require('../../main')
+
+const {withCleanup} = require('../utils')
+
+const {dynamodb: {batchWriteCommits, getHeadCommit}} = ddbes
 
 test('dynamodb.getHeadCommit()', async t => {
   await withCleanup(async () => {

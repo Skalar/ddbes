@@ -2,10 +2,11 @@
 
 set -e
 
-cd /ddbes
+cd /src
+
+export REPORTER=tap-dot
 
 watchexec \
   -p \
-  --exts js \
   --watch . \
-  "scripts/run-tests all; eslint --color --ignore-pattern /node_modules ." 
+  "rsync -a --delete --exclude node_modules . /ddbes && scripts/unit-tests && scripts/integration-tests && scripts/lint" 

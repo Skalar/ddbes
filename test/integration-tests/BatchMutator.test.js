@@ -1,10 +1,13 @@
 const test = require('blue-tape')
-const {withCleanup, assertAggregateCommits} = require('../../test/utils')
-const batchWriteCommits = require('./batchWriteCommits')
-const BatchMutator = require('./BatchMutator')
-const getAggregateCommits = require('./getAggregateCommits')
-const serializeCommit = require('./serializeCommit')
-const deserializeCommit = require('./deserializeCommit')
+const ddbes = require('../../main')
+const {withCleanup, assertAggregateCommits} = require('../utils')
+const {
+  batchWriteCommits,
+  BatchMutator,
+  getAggregateCommits,
+  serializeCommit,
+  deserializeCommit,
+} = ddbes.dynamodb
 
 test('dynamodb.BatchMutator#delete()', async t => {
   await withCleanup(async () => {

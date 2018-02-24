@@ -1,4 +1,4 @@
-const {getAggregateCommits} = require('../../lib/dynamodb')
+const {dynamodb: {getAggregateCommits}} = require('../../main')
 const {pick} = require('lodash')
 
 async function assertAggregateCommits(
