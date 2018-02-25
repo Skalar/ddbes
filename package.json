@@ -1,6 +1,6 @@
 {
   "name": "ddbes",
-  "version": "0.24.0-alpha.5",
+  "version": "0.25.0",
   "description": "DynamoDB Event Store",
   "engines": {
     "node": ">=6.5.0"
