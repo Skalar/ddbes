@@ -651,200 +651,134 @@ test('Aggregate.create()', async t => {
   })
 })
 
-test('Aggregate.eachInstance()', async t => {
+test('Aggregate.commit() without key props', async t => {
   await withCleanup(async () => {
-    await CartWithKeyProps.eachInstance(async () => {
-      t.fail('This should not be called')
-    })
+    const commit = await Cart.commit([{type: 'ItemAdded', name: 'firstItem'}])
 
-    t.pass(
-      'does not invoke the async callback and resolve the promise when no commits'
-    )
-
-    const storeIds = ['oslo', 'bergen', 'trondheim']
-
-    for (const storeId of storeIds) {
-      await ddbes.dynamodb.batchWriteCommits({
-        aggregateType: 'CartWithKeyProps',
-        aggregateKey: `myaccount.${storeId}`,
+    await assertAggregateCommits(
+      t,
+      {
+        aggregateType: 'Cart',
         commits: [
           {
-            committedAt: new Date('2017-01-01'),
-            events: [
-              {
-                type: 'Created',
-                accountId: 'myaccount',
-                storeId,
-              },
-            ],
+            version: 1,
+            events: [{type: 'ItemAdded', name: 'firstItem'}],
+          },
+        ],
+      },
+      'commits correctly to an empty aggregate'
+    )
+
+    t.equal(typeof commit, 'object', 'returns a commit')
+    t.deepEqual(
+      Object.keys(commit),
+      [
+        'aggregateType',
+        'aggregateKey',
+        'commitId',
+        'version',
+        'active',
+        'committedAt',
+        'events',
+      ],
+      'the returned commit has the correct attributes'
+    )
+
+    await Cart.commit([{type: 'ItemAdded', name: 'secondItem'}])
+
+    await assertAggregateCommits(
+      t,
+      {
+        aggregateType: 'Cart',
+        commits: [
+          {
+            version: 1,
+            events: [{type: 'ItemAdded', name: 'firstItem'}],
           },
           {
-            committedAt: new Date('2017-01-01'),
-            events: [
-              {
-                type: 'ItemAdded',
-                name: 'test',
-              },
-            ],
+            version: 2,
+            events: [{type: 'ItemAdded', name: 'secondItem'}],
           },
         ],
-      })
-    }
-
-    const aggregatesProvided = []
-
-    await CartWithKeyProps.eachInstance(async cart => {
-      aggregatesProvided.push(cart)
-    })
-
-    t.deepEqual(
-      aggregatesProvided[0].state,
-      {accountId: 'myaccount', storeId: 'bergen', items: ['test']},
-      'provides first instance with correct state'
+      },
+      'commits correctly to an aggregate with existing commit'
     )
 
-    t.deepEqual(
-      aggregatesProvided[1].state,
-      {accountId: 'myaccount', storeId: 'oslo', items: ['test']},
-      'provides second instance with correct state'
-    )
-
-    t.deepEqual(
-      aggregatesProvided[2].state,
-      {accountId: 'myaccount', storeId: 'trondheim', items: ['test']},
-      'provides third instance with correct state'
-    )
-  })
-
-  test('Aggregate.commit() without key props', async t => {
-    await withCleanup(async () => {
-      const commit = await Cart.commit([{type: 'ItemAdded', name: 'firstItem'}])
-
-      await assertAggregateCommits(
-        t,
-        {
-          aggregateType: 'Cart',
-          commits: [
-            {
-              version: 1,
-              events: [{type: 'ItemAdded', name: 'firstItem'}],
-            },
-          ],
-        },
-        'commits correctly to an empty aggregate'
-      )
-
-      t.equal(typeof commit, 'object', 'returns a commit')
-      t.deepEqual(
-        Object.keys(commit),
-        [
-          'aggregateType',
-          'aggregateKey',
-          'commitId',
-          'version',
-          'active',
-          'committedAt',
-          'events',
+    await Cart.commit([{type: 'ItemAdded', name: 'thirdItem'}])
+    await assertAggregateCommits(
+      t,
+      {
+        aggregateType: 'Cart',
+        commits: [
+          {
+            version: 1,
+            events: [{type: 'ItemAdded', name: 'firstItem'}],
+          },
+          {
+            version: 2,
+            events: [{type: 'ItemAdded', name: 'secondItem'}],
+          },
+          {
+            version: 3,
+            events: [{type: 'ItemAdded', name: 'thirdItem'}],
+          },
         ],
-        'the returned commit has the correct attributes'
-      )
-
-      await Cart.commit([{type: 'ItemAdded', name: 'secondItem'}])
-
-      await assertAggregateCommits(
-        t,
-        {
-          aggregateType: 'Cart',
-          commits: [
-            {
-              version: 1,
-              events: [{type: 'ItemAdded', name: 'firstItem'}],
-            },
-            {
-              version: 2,
-              events: [{type: 'ItemAdded', name: 'secondItem'}],
-            },
-          ],
-        },
-        'commits correctly to an aggregate with existing commit'
-      )
-
-      await Cart.commit([{type: 'ItemAdded', name: 'thirdItem'}])
-      await assertAggregateCommits(
-        t,
-        {
-          aggregateType: 'Cart',
-          commits: [
-            {
-              version: 1,
-              events: [{type: 'ItemAdded', name: 'firstItem'}],
-            },
-            {
-              version: 2,
-              events: [{type: 'ItemAdded', name: 'secondItem'}],
-            },
-            {
-              version: 3,
-              events: [{type: 'ItemAdded', name: 'thirdItem'}],
-            },
-          ],
-        },
-        'commits correctly to an aggregate with existing commit'
-      )
-    })
+      },
+      'commits correctly to an aggregate with existing commit'
+    )
   })
+})
 
-  test('Aggregate.commit() with key props', async t => {
-    await withCleanup(async () => {
-      await CartWithKeyProps.commit(
-        {
-          accountId: '0123',
-          storeId: 'oslo',
-        },
-        [{type: 'ItemAdded', name: 'firstItem'}]
-      )
+test('Aggregate.commit() with key props', async t => {
+  await withCleanup(async () => {
+    await CartWithKeyProps.commit(
+      {
+        accountId: '0123',
+        storeId: 'oslo',
+      },
+      [{type: 'ItemAdded', name: 'firstItem'}]
+    )
 
-      await assertAggregateCommits(
-        t,
-        {
-          aggregateType: 'CartWithKeyProps',
-          aggregateKey: '0123.oslo',
-          commits: [
-            {
-              version: 1,
-              events: [{type: 'ItemAdded', name: 'firstItem'}],
-            },
-          ],
-        },
-        'commits correctly to an empty aggregate'
-      )
+    await assertAggregateCommits(
+      t,
+      {
+        aggregateType: 'CartWithKeyProps',
+        aggregateKey: '0123.oslo',
+        commits: [
+          {
+            version: 1,
+            events: [{type: 'ItemAdded', name: 'firstItem'}],
+          },
+        ],
+      },
+      'commits correctly to an empty aggregate'
+    )
 
-      await CartWithKeyProps.commit(
-        {
-          accountId: '0123',
-          storeId: 'oslo',
-        },
-        [{type: 'ItemAdded', name: 'secondItem'}]
-      )
+    await CartWithKeyProps.commit(
+      {
+        accountId: '0123',
+        storeId: 'oslo',
+      },
+      [{type: 'ItemAdded', name: 'secondItem'}]
+    )
 
-      await assertAggregateCommits(
-        t,
-        {
-          aggregateType: 'CartWithKeyProps',
-          aggregateKey: '0123.oslo',
-          commits: [
-            {
-              version: 1,
-              events: [{type: 'ItemAdded', name: 'firstItem'}],
-            },
-            {
-              version: 2,
-              events: [{type: 'ItemAdded', name: 'secondItem'}],
-            },
-          ],
-        },
-        'commits correctly to an aggregate with existing commit'
-      )
-    })
+    await assertAggregateCommits(
+      t,
+      {
+        aggregateType: 'CartWithKeyProps',
+        aggregateKey: '0123.oslo',
+        commits: [
+          {
+            version: 1,
+            events: [{type: 'ItemAdded', name: 'firstItem'}],
+          },
+          {
+            version: 2,
+            events: [{type: 'ItemAdded', name: 'secondItem'}],
+          },
+        ],
+      },
+      'commits correctly to an aggregate with existing commit'
+    )
   })
 })
