@@ -18,6 +18,6 @@ then
   for target in "${targets[@]}"
   do
     echo -e "\n# Unit tests (transpiled, node $target)"
-    NODE_ENV=test /usr/local-$target/bin/node $TAPE_BIN "lib-${target}/**/*.test.js" | $reporter
+    NODE_ENV=test /usr/local-$target/bin/node -r ./main $TAPE_BIN "lib-${target}/**/*.test.js" | $reporter
   done
 fi
