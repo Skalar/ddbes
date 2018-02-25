@@ -9,7 +9,7 @@ rm -rf /dist
 mkdir -p /dist
 ln -s /ddbes/node_modules /dist/node_modules
 ln -s /src/.git /dist/.git
-cp -R lib test package.json main.js .npmignore /dist/
+cp -R lib test package.json main.js .npmignore README.md /dist/
 
 for target in "${targets[@]}"
 do
