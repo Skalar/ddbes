@@ -18,8 +18,7 @@
     "ws": "^3.3.3"
   },
   "scripts": {
-    "test":
-      "scripts/build && scripts/unit-tests --all-targets && scripts/integration-tests --all-targets",
+    "test": "scripts/build && scripts/unit-tests --all-targets && scripts/integration-tests --all-targets",
     "build": "scripts/build"
   },
   "devDependencies": {
@@ -32,6 +31,7 @@
     "eslint-config-skalar": "^0.0.7",
     "faucet": "^0.0.1",
     "lodash": "^4.17.4",
+    "proxyquire": "^1.8.0",
     "tap-dot": "^1.0.5",
     "tap-spec": "^4.1.1",
     "tape": "^4.8.0"
