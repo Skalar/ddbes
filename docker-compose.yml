@@ -16,12 +16,9 @@ services:
   # For running integration tests locally without an AWS account
 
   dynamodb:
-    image: dwmkerr/dynamodb
-    command: -sharedDb -inMemory
-    volumes:
-      - /data
+    image: socialpoint/dynalite
 
   s3:
     image: skalar/fakes3
-    command: s3rver --hostname 0.0.0.0 --port 5000 --directory /tmp/s3 --cors --silent
+    command: s3rver --hostname 0.0.0.0 --port 5000 --directory /tmp/s3 --silent
   
