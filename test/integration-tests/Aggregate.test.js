@@ -7,16 +7,16 @@ class Cart extends Aggregate {
   static reducer(state = {items: []}, event) {
     switch (event.type) {
       case 'Created': {
-        const {accountId, storeId} = event
+        const {accountId, storeId} = event.properties
         return {...state, accountId, storeId}
       }
       case 'ItemAdded': {
-        state.items.push(event.name)
+        state.items.push(event.properties.name)
 
         return state
       }
       case 'ItemRemoved': {
-        const itemIndex = state.items.indexOf(event.name)
+        const itemIndex = state.items.indexOf(event.properties.name)
 
         if (itemIndex !== -1) {
           state.items.splice(itemIndex, 1)
@@ -30,17 +30,17 @@ class Cart extends Aggregate {
   }
 
   addItem(name) {
-    return this.commit({type: 'ItemAdded', name})
+    return this.commit({type: 'ItemAdded', properties: {name}})
   }
 
   removeItem(name) {
-    return this.commit({type: 'ItemRemoved', name})
+    return this.commit({type: 'ItemRemoved', properties: {name}})
   }
 }
 
 class CartWithKeyProps extends Cart {
   create({accountId, storeId}) {
-    return this.commit({type: 'Created', accountId, storeId})
+    return this.commit({type: 'Created', properties: {accountId, storeId}})
   }
 }
 
@@ -56,7 +56,7 @@ test('Aggregate.load() without key', async t => {
           events: [
             {
               type: 'ItemAdded',
-              name: 'firstItem',
+              properties: {name: 'firstItem'},
             },
           ],
         },
@@ -65,7 +65,7 @@ test('Aggregate.load() without key', async t => {
           events: [
             {
               type: 'ItemAdded',
-              name: 'secondItem',
+              properties: {name: 'secondItem'},
             },
           ],
         },
@@ -74,7 +74,7 @@ test('Aggregate.load() without key', async t => {
           events: [
             {
               type: 'ItemRemoved',
-              name: 'firstItem',
+              properties: {name: 'firstItem'},
             },
           ],
         },
@@ -144,7 +144,7 @@ test('Aggregate.load() with key', async t => {
           events: [
             {
               type: 'ItemAdded',
-              name: 'firstItem',
+              properties: {name: 'firstItem'},
             },
           ],
         },
@@ -153,7 +153,7 @@ test('Aggregate.load() with key', async t => {
           events: [
             {
               type: 'ItemAdded',
-              name: 'secondItem',
+              properties: {name: 'secondItem'},
             },
           ],
         },
@@ -162,7 +162,7 @@ test('Aggregate.load() with key', async t => {
           events: [
             {
               type: 'ItemRemoved',
-              name: 'firstItem',
+              properties: {name: 'firstItem'},
             },
           ],
         },
@@ -244,7 +244,7 @@ test('Aggregate#getState()', async t => {
           events: [
             {
               type: 'ItemAdded',
-              name: 'firstItem',
+              properties: {name: 'firstItem'},
             },
           ],
         },
@@ -264,7 +264,7 @@ test('Aggregate#commit()', async t => {
   await withCleanup(async () => {
     const aggregate = await Cart.load()
     const aggregateCopy = await Cart.load()
-    await aggregate.commit({type: 'ItemAdded', name: 'firstItem'})
+    await aggregate.commit({type: 'ItemAdded', properties: {name: 'firstItem'}})
 
     await assertAggregateCommits(
       t,
@@ -272,8 +272,10 @@ test('Aggregate#commit()', async t => {
         aggregateType: 'Cart',
         commits: [
           {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'firstItem'}],
+            aggregateVersion: 1,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'firstItem'}},
+            ],
           },
         ],
       },
@@ -286,7 +288,7 @@ test('Aggregate#commit()', async t => {
     )
 
     await aggregateCopy.commit(
-      {type: 'ItemAdded', name: 'secondItem'},
+      {type: 'ItemAdded', properties: {name: 'secondItem'}},
       {retry: true}
     )
 
@@ -296,12 +298,16 @@ test('Aggregate#commit()', async t => {
         aggregateType: 'Cart',
         commits: [
           {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'firstItem'}],
+            aggregateVersion: 1,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'firstItem'}},
+            ],
           },
           {
-            version: 2,
-            events: [{type: 'ItemAdded', name: 'secondItem'}],
+            aggregateVersion: 2,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'secondItem'}},
+            ],
           },
         ],
       },
@@ -311,7 +317,10 @@ test('Aggregate#commit()', async t => {
 
   await withCleanup(async () => {
     const aggregate = await Cart.load()
-    await aggregate.commit({type: 'ItemAdded', name: new Date('2017-01-01')})
+    await aggregate.commit({
+      type: 'ItemAdded',
+      properties: {name: new Date('2017-01-01')},
+    })
 
     await assertAggregateCommits(
       t,
@@ -319,8 +328,14 @@ test('Aggregate#commit()', async t => {
         aggregateType: 'Cart',
         commits: [
           {
-            version: 1,
-            events: [{type: 'ItemAdded', name: '2017-01-01T00:00:00.000Z'}],
+            aggregateVersion: 1,
+            events: [
+              {
+                type: 'ItemAdded',
+                properties: {name: '2017-01-01T00:00:00.000Z'},
+                version: 0,
+              },
+            ],
           },
         ],
       },
@@ -342,14 +357,14 @@ test('Aggregate#writeSnapshot()', async t => {
     await aggregate.writeSnapshot()
 
     const {
-      version,
+      aggregateVersion,
       state,
       upcastersChecksum,
     } = await ddbes.s3.readAggregateSnapshot({
       aggregateType: 'Cart',
       aggregateKey: '@',
     })
-    t.equal(version, 1, 'the snapshot is the correct version')
+    t.equal(aggregateVersion, 1, 'the snapshot is the correct version')
     t.deepEqual(
       state,
       {items: ['firstItem']},
@@ -364,7 +379,10 @@ test('Aggregate#writeSnapshot()', async t => {
     try {
       Cart.upcasters = {
         ItemAdded: {
-          0: event => ({...event, name: `_${event.name}_`}),
+          0: event => ({
+            ...event,
+            properties: {name: `_${event.properties.name}_`},
+          }),
         },
       }
 
@@ -419,22 +437,22 @@ test('Aggregate#hydrate()', async t => {
         aggregateType: 'Cart',
         commits: [
           {
-            version: 1,
+            aggregateVersion: 1,
             committedAt: new Date('2018-01-01'),
             events: [
               {
                 type: 'ItemAdded',
-                name: 'firstItem',
+                properties: {name: 'firstItem'},
               },
             ],
           },
           {
-            version: 2,
+            aggregateVersion: 2,
             committedAt: new Date('2018-01-02'),
             events: [
               {
                 type: 'ItemAdded',
-                name: 'secondItem',
+                properties: {name: 'secondItem'},
               },
             ],
           },
@@ -444,7 +462,7 @@ test('Aggregate#hydrate()', async t => {
       await ddbes.s3.writeAggregateSnapshot({
         aggregateType: 'Cart',
         aggregateKey: '@',
-        version: 1,
+        aggregateVersion: 1,
         state: {items: ['firstItemFromSnapshot']},
         headCommitTimestamp: new Date('2018-01-01'),
       })
@@ -452,8 +470,7 @@ test('Aggregate#hydrate()', async t => {
       await Cart.commit([
         {
           type: 'ItemAdded',
-          name: 'secondItem',
-          committedAt: new Date('2018-01-02'),
+          properties: {name: 'secondItem'},
         },
       ])
 
@@ -476,7 +493,7 @@ test('Aggregate#hydrate()', async t => {
       await ddbes.s3.writeAggregateSnapshot({
         aggregateType: 'Cart',
         aggregateKey: '@',
-        version: 2,
+        aggregateVersion: 2,
         state: {items: ['firstItemFromSnapshot', 'secondItemFromSnapshot']},
         headCommitTimestamp: new Date('2018-01-02'),
       })
@@ -506,7 +523,10 @@ test('Aggregate#hydrate()', async t => {
     try {
       Cart.upcasters = {
         ItemAdded: {
-          0: event => ({...event, name: `_${event.name}_`}),
+          0: ({properties, ...rest}) => ({
+            ...rest,
+            properties: {name: `_${properties.name}_`},
+          }),
         },
       }
 
@@ -527,8 +547,14 @@ test('Aggregate#hydrate()', async t => {
 
       Cart.upcasters = {
         ItemAdded: {
-          0: event => ({...event, name: `_${event.name}_`}),
-          1: event => ({...event, name: `*${event.name}*`}),
+          0: ({properties, ...rest}) => ({
+            ...rest,
+            properties: {name: `_${properties.name}_`},
+          }),
+          1: ({properties, ...rest}) => ({
+            ...rest,
+            properties: {name: `*${properties.name}*`},
+          }),
         },
       }
 
@@ -556,7 +582,10 @@ test('Aggregate.upcasters', async t => {
 
       Cart.upcasters = {
         ItemAdded: {
-          0: event => ({...event, name: `_${event.name}_`}),
+          0: event => ({
+            ...event,
+            properties: {name: `_${event.properties.name}_`},
+          }),
         },
       }
 
@@ -580,7 +609,10 @@ test('Aggregate.lazyTransformation', async t => {
 
       Cart.upcasters = {
         ItemAdded: {
-          0: event => ({...event, name: `_${event.name}_`}),
+          0: event => ({
+            ...event,
+            properties: {name: `_${event.properties.name}_`},
+          }),
         },
       }
 
@@ -593,8 +625,14 @@ test('Aggregate.lazyTransformation', async t => {
           aggregateType: 'Cart',
           commits: [
             {
-              version: 1,
-              events: [{type: 'ItemAdded', name: '_firstItem_', version: 1}],
+              aggregateVersion: 1,
+              events: [
+                {
+                  type: 'ItemAdded',
+                  properties: {name: '_firstItem_'},
+                  version: 1,
+                },
+              ],
             },
           ],
         },
@@ -639,9 +677,13 @@ test('Aggregate.create()', async t => {
         aggregateKey: 'myaccount.oslo',
         commits: [
           {
-            version: 1,
+            aggregateVersion: 1,
             events: [
-              {type: 'Created', accountId: 'myaccount', storeId: 'oslo'},
+              {
+                type: 'Created',
+                version: 0,
+                properties: {accountId: 'myaccount', storeId: 'oslo'},
+              },
             ],
           },
         ],
@@ -653,7 +695,9 @@ test('Aggregate.create()', async t => {
 
 test('Aggregate.commit() without key props', async t => {
   await withCleanup(async () => {
-    const commit = await Cart.commit([{type: 'ItemAdded', name: 'firstItem'}])
+    const commit = await Cart.commit([
+      {type: 'ItemAdded', properties: {name: 'firstItem'}},
+    ])
 
     await assertAggregateCommits(
       t,
@@ -661,8 +705,10 @@ test('Aggregate.commit() without key props', async t => {
         aggregateType: 'Cart',
         commits: [
           {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'firstItem'}],
+            aggregateVersion: 1,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'firstItem'}},
+            ],
           },
         ],
       },
@@ -673,10 +719,10 @@ test('Aggregate.commit() without key props', async t => {
     t.deepEqual(
       Object.keys(commit),
       [
+        'commitId',
         'aggregateType',
         'aggregateKey',
-        'commitId',
-        'version',
+        'aggregateVersion',
         'active',
         'committedAt',
         'events',
@@ -684,7 +730,7 @@ test('Aggregate.commit() without key props', async t => {
       'the returned commit has the correct attributes'
     )
 
-    await Cart.commit([{type: 'ItemAdded', name: 'secondItem'}])
+    await Cart.commit([{type: 'ItemAdded', properties: {name: 'secondItem'}}])
 
     await assertAggregateCommits(
       t,
@@ -692,35 +738,45 @@ test('Aggregate.commit() without key props', async t => {
         aggregateType: 'Cart',
         commits: [
           {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'firstItem'}],
+            aggregateVersion: 1,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'firstItem'}},
+            ],
           },
           {
-            version: 2,
-            events: [{type: 'ItemAdded', name: 'secondItem'}],
+            aggregateVersion: 2,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'secondItem'}},
+            ],
           },
         ],
       },
       'commits correctly to an aggregate with existing commit'
     )
 
-    await Cart.commit([{type: 'ItemAdded', name: 'thirdItem'}])
+    await Cart.commit([{type: 'ItemAdded', properties: {name: 'thirdItem'}}])
     await assertAggregateCommits(
       t,
       {
         aggregateType: 'Cart',
         commits: [
           {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'firstItem'}],
+            aggregateVersion: 1,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'firstItem'}},
+            ],
           },
           {
-            version: 2,
-            events: [{type: 'ItemAdded', name: 'secondItem'}],
+            aggregateVersion: 2,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'secondItem'}},
+            ],
           },
           {
-            version: 3,
-            events: [{type: 'ItemAdded', name: 'thirdItem'}],
+            aggregateVersion: 3,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'thirdItem'}},
+            ],
           },
         ],
       },
@@ -736,7 +792,7 @@ test('Aggregate.commit() with key props', async t => {
         accountId: '0123',
         storeId: 'oslo',
       },
-      [{type: 'ItemAdded', name: 'firstItem'}]
+      [{type: 'ItemAdded', properties: {name: 'firstItem'}}]
     )
 
     await assertAggregateCommits(
@@ -746,8 +802,10 @@ test('Aggregate.commit() with key props', async t => {
         aggregateKey: '0123.oslo',
         commits: [
           {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'firstItem'}],
+            aggregateVersion: 1,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'firstItem'}},
+            ],
           },
         ],
       },
@@ -759,7 +817,7 @@ test('Aggregate.commit() with key props', async t => {
         accountId: '0123',
         storeId: 'oslo',
       },
-      [{type: 'ItemAdded', name: 'secondItem'}]
+      [{type: 'ItemAdded', properties: {name: 'secondItem'}}]
     )
 
     await assertAggregateCommits(
@@ -769,12 +827,16 @@ test('Aggregate.commit() with key props', async t => {
         aggregateKey: '0123.oslo',
         commits: [
           {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'firstItem'}],
+            aggregateVersion: 1,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'firstItem'}},
+            ],
           },
           {
-            version: 2,
-            events: [{type: 'ItemAdded', name: 'secondItem'}],
+            aggregateVersion: 2,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'secondItem'}},
+            ],
           },
         ],
       },

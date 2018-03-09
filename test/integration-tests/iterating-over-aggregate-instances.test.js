@@ -8,7 +8,7 @@ class User extends Aggregate {
     switch (event.type) {
       case 'Created':
       case 'NameChanged': {
-        const {name} = event
+        const {name} = event.properties
         return {...state, name}
       }
       default:
@@ -26,19 +26,19 @@ test('Iterating over aggregate instances with Aggregate.instances', async t => {
           aggregateType: 'User',
           aggregateKey: '1',
           version: '1',
-          events: [{type: 'Created', name: 'First user'}],
+          events: [{type: 'Created', properties: {name: 'First user'}}],
         },
         {
           aggregateType: 'User',
           aggregateKey: '1',
           version: '2',
-          events: [{type: 'NameChanged', name: 'Primero user'}],
+          events: [{type: 'NameChanged', properties: {name: 'Primero user'}}],
         },
         {
           aggregateType: 'User',
           aggregateKey: '2',
           version: '1',
-          events: [{type: 'Created', name: 'Second user'}],
+          events: [{type: 'Created', properties: {name: 'Second user'}}],
         },
       ],
     })

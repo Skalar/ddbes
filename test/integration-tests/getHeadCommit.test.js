@@ -11,7 +11,7 @@ test('dynamodb.getHeadCommit()', async t => {
       aggregateType: 'Cart',
       commits: [
         {
-          version: 1,
+          aggregateVersion: 1,
           committedAt: new Date('2017-01-01'),
           events: [
             {
@@ -21,7 +21,7 @@ test('dynamodb.getHeadCommit()', async t => {
           ],
         },
         {
-          version: 2,
+          aggregateVersion: 2,
           committedAt: new Date('2017-01-02'),
           events: [
             {
@@ -35,6 +35,6 @@ test('dynamodb.getHeadCommit()', async t => {
 
     const headCommit = await getHeadCommit()
 
-    t.equal(headCommit.version, 2, 'returns the last commit')
+    t.equal(headCommit.aggregateVersion, 2, 'returns the last commit')
   })
 })

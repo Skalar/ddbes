@@ -16,12 +16,12 @@ test('dynamodb.BatchMutator#delete()', async t => {
       commits: Array(30)
         .fill(null)
         .map((_, i) => ({
-          version: i + 1,
+          aggregateVersion: i + 1,
           committedAt: new Date('2017-01-01'),
           events: [
             {
               type: 'ItemAdded',
-              name: `Item ${i + 1}`,
+              properties: {name: `Item ${i + 1}`},
             },
           ],
         })),
@@ -38,8 +38,10 @@ test('dynamodb.BatchMutator#delete()', async t => {
         aggregateType: 'Cart',
         commits: [
           {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'Item 1'}],
+            aggregateVersion: 1,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'Item 1'}},
+            ],
           },
         ],
       },
@@ -54,22 +56,22 @@ test('dynamodb.BatchMutator#put()', async t => {
       aggregateType: 'Cart',
       commits: [
         {
-          version: 1,
+          aggregateVersion: 1,
           committedAt: new Date('2017-01-01'),
           events: [
             {
               type: 'ItemAdded',
-              name: 'Item 1',
+              properties: {name: 'Item 1'},
             },
           ],
         },
         {
-          version: 2,
+          aggregateVersion: 2,
           committedAt: new Date('2017-01-02'),
           events: [
             {
               type: 'ItemAdded',
-              name: 'Item 2',
+              properties: {name: 'Item 2'},
             },
           ],
         },
@@ -93,12 +95,16 @@ test('dynamodb.BatchMutator#put()', async t => {
         aggregateType: 'Cart',
         commits: [
           {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'Item 1'}],
+            aggregateVersion: 1,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'Item 1'}},
+            ],
           },
           {
-            version: 2,
-            events: [{type: 'ItemAdded', name: 'Item 2'}],
+            aggregateVersion: 2,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'Item 2'}},
+            ],
           },
         ],
       },
@@ -114,7 +120,10 @@ test('dynamodb.BatchMutator#put()', async t => {
         const events = commit.events.map(event => {
           switch (event.type) {
             case 'ItemAdded': {
-              return {...event, name: `${event.name} updated`}
+              return {
+                ...event,
+                properties: {name: `${event.properties.name} updated`},
+              }
             }
             default:
               return event
@@ -134,12 +143,24 @@ test('dynamodb.BatchMutator#put()', async t => {
         aggregateType: 'Cart',
         commits: [
           {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'Item 1 updated'}],
+            aggregateVersion: 1,
+            events: [
+              {
+                type: 'ItemAdded',
+                version: 0,
+                properties: {name: 'Item 1 updated'},
+              },
+            ],
           },
           {
-            version: 2,
-            events: [{type: 'ItemAdded', name: 'Item 2 updated'}],
+            aggregateVersion: 2,
+            events: [
+              {
+                type: 'ItemAdded',
+                version: 0,
+                properties: {name: 'Item 2 updated'},
+              },
+            ],
           },
         ],
       },
@@ -150,21 +171,23 @@ test('dynamodb.BatchMutator#put()', async t => {
     await createCommits()
     const mutator = new BatchMutator()
     await mutator.put(
-      [
-        {
-          aggregateType: 'Cart',
-          version: 1,
-          committedAt: new Date('2017-01-01'),
-          events: [
-            {
-              type: 'ItemAdded',
-              name: 'Item 1 updated',
-            },
-          ],
-        },
-      ]
-        .map(serializeCommit)
-        .map(deserializeCommit)
+      await Promise.all(
+        [
+          {
+            aggregateType: 'Cart',
+            aggregateVersion: 1,
+            committedAt: new Date('2017-01-01'),
+            events: [
+              {
+                type: 'ItemAdded',
+                properties: {name: 'Item 1 updated'},
+              },
+            ],
+          },
+        ].map(
+          async commit => await deserializeCommit(await serializeCommit(commit))
+        )
+      )
     )
     await mutator.drained
 
@@ -174,12 +197,20 @@ test('dynamodb.BatchMutator#put()', async t => {
         aggregateType: 'Cart',
         commits: [
           {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'Item 1 updated'}],
+            aggregateVersion: 1,
+            events: [
+              {
+                type: 'ItemAdded',
+                version: 0,
+                properties: {name: 'Item 1 updated'},
+              },
+            ],
           },
           {
-            version: 2,
-            events: [{type: 'ItemAdded', name: 'Item 2'}],
+            aggregateVersion: 2,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'Item 2'}},
+            ],
           },
         ],
       },
@@ -190,15 +221,15 @@ test('dynamodb.BatchMutator#put()', async t => {
     await createCommits()
     const mutator = new BatchMutator()
     await mutator.put(
-      deserializeCommit(
-        serializeCommit({
+      await deserializeCommit(
+        await serializeCommit({
           aggregateType: 'Cart',
-          version: 1,
+          aggregateVersion: 1,
           committedAt: new Date('2017-01-01'),
           events: [
             {
               type: 'ItemAdded',
-              name: 'Item 1 updated',
+              properties: {name: 'Item 1 updated'},
             },
           ],
         })
@@ -212,12 +243,20 @@ test('dynamodb.BatchMutator#put()', async t => {
         aggregateType: 'Cart',
         commits: [
           {
-            version: 1,
-            events: [{type: 'ItemAdded', name: 'Item 1 updated'}],
+            aggregateVersion: 1,
+            events: [
+              {
+                type: 'ItemAdded',
+                version: 0,
+                properties: {name: 'Item 1 updated'},
+              },
+            ],
           },
           {
-            version: 2,
-            events: [{type: 'ItemAdded', name: 'Item 2'}],
+            aggregateVersion: 2,
+            events: [
+              {type: 'ItemAdded', version: 0, properties: {name: 'Item 2'}},
+            ],
           },
         ],
       },
