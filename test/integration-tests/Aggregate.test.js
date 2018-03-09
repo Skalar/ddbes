@@ -379,10 +379,7 @@ test('Aggregate#writeSnapshot()', async t => {
     try {
       Cart.upcasters = {
         ItemAdded: {
-          0: event => ({
-            ...event,
-            properties: {name: `_${event.properties.name}_`},
-          }),
+          0: eventProps => ({name: `_${eventProps.name}_`}),
         },
       }
 
@@ -523,10 +520,7 @@ test('Aggregate#hydrate()', async t => {
     try {
       Cart.upcasters = {
         ItemAdded: {
-          0: ({properties, ...rest}) => ({
-            ...rest,
-            properties: {name: `_${properties.name}_`},
-          }),
+          0: eventProps => ({name: `_${eventProps.name}_`}),
         },
       }
 
@@ -547,14 +541,8 @@ test('Aggregate#hydrate()', async t => {
 
       Cart.upcasters = {
         ItemAdded: {
-          0: ({properties, ...rest}) => ({
-            ...rest,
-            properties: {name: `_${properties.name}_`},
-          }),
-          1: ({properties, ...rest}) => ({
-            ...rest,
-            properties: {name: `*${properties.name}*`},
-          }),
+          0: eventProps => ({name: `_${eventProps.name}_`}),
+          1: eventProps => ({name: `*${eventProps.name}*`}),
         },
       }
 
@@ -582,10 +570,7 @@ test('Aggregate.upcasters', async t => {
 
       Cart.upcasters = {
         ItemAdded: {
-          0: event => ({
-            ...event,
-            properties: {name: `_${event.properties.name}_`},
-          }),
+          0: eventProps => ({name: `_${eventProps.name}_`}),
         },
       }
 
@@ -609,10 +594,7 @@ test('Aggregate.lazyTransformation', async t => {
 
       Cart.upcasters = {
         ItemAdded: {
-          0: event => ({
-            ...event,
-            properties: {name: `_${event.properties.name}_`},
-          }),
+          0: eventProps => ({name: `_${eventProps.name}_`}),
         },
       }
 
