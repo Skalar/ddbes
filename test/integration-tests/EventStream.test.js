@@ -26,7 +26,7 @@ test('EventStream EventEmitter', async t => {
           events: [
             {
               type: 'ItemAdded',
-              name: 'firstItem',
+              properties: {name: 'firstItem'},
             },
           ],
         },
@@ -39,11 +39,12 @@ test('EventStream EventEmitter', async t => {
           event,
           {
             type: 'ItemAdded',
-            name: 'firstItem',
+            properties: {name: 'firstItem'},
             aggregateType: 'Cart',
             aggregateKey: '@',
+            aggregateVersion: 1,
             commitId: '20300101000000000:Cart:@',
-            version: 1,
+            version: 0,
             active: true,
             committedAt: '2030-01-01T00:00:00.000Z',
           },
@@ -74,31 +75,31 @@ test('EventStream AsyncIterator', async t => {
       aggregateType: 'Cart',
       commits: [
         {
-          version: 1,
+          aggregateVersion: 1,
           committedAt: new Date('2030-01-01'),
           events: [
             {
               type: 'ItemAdded',
-              name: 'firstItem',
+              properties: {name: 'firstItem'},
             },
           ],
         },
         {
-          version: 1,
+          aggregateVersion: 1,
           aggregateType: 'Other',
           events: [{type: 'SomeEvent'}],
         },
         {
           committedAt: new Date('2030-01-02'),
-          version: 2,
+          aggregateVersion: 2,
           events: [
             {
               type: 'ItemAdded',
-              name: 'secondItem',
+              properties: {name: 'secondItem'},
             },
             {
               type: 'ItemAdded',
-              name: 'thirdItem',
+              properties: {name: 'thirdItem'},
             },
           ],
         },
@@ -110,11 +111,12 @@ test('EventStream AsyncIterator', async t => {
       {
         value: {
           type: 'ItemAdded',
-          name: 'firstItem',
+          properties: {name: 'firstItem'},
           aggregateType: 'Cart',
           aggregateKey: '@',
+          aggregateVersion: 1,
           commitId: '20300101000000000:Cart:@',
-          version: 1,
+          version: 0,
           active: true,
           committedAt: '2030-01-01T00:00:00.000Z',
         },
@@ -128,11 +130,12 @@ test('EventStream AsyncIterator', async t => {
       {
         value: {
           type: 'ItemAdded',
-          name: 'secondItem',
+          properties: {name: 'secondItem'},
           aggregateType: 'Cart',
           aggregateKey: '@',
+          aggregateVersion: 2,
           commitId: '20300102000000000:Cart:@',
-          version: 2,
+          version: 0,
           active: true,
           committedAt: '2030-01-02T00:00:00.000Z',
         },
@@ -146,11 +149,12 @@ test('EventStream AsyncIterator', async t => {
       {
         value: {
           type: 'ItemAdded',
-          name: 'thirdItem',
+          properties: {name: 'thirdItem'},
           aggregateType: 'Cart',
           aggregateKey: '@',
+          aggregateVersion: 2,
           commitId: '20300102000000000:Cart:@',
-          version: 2,
+          version: 0,
           active: true,
           committedAt: '2030-01-02T00:00:00.000Z',
         },
